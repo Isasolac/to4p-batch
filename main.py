@@ -1,5 +1,8 @@
 import os
-import argparse
+import argparse # Could also look at getopt?
+import parse_fs
+import wordlist
+import report
 
 '''
     Command line input: python ./main.py image1.dd image2.dd [...]
@@ -18,35 +21,6 @@ def main():
 
     for image in args.images:
         print(image)
-    
-
-def ntfs_parse(ntfs):
-    # TODO: parse NTFS filesystem! Argument will be passed in as a string
-
-    # PERSON 2
-    pass
-
-def fat_parse(fat):
-    # TODO: parse FAT filesystem! Argument will be passed in as a string
-    
-    # PERSON 2
-    pass
-
-
-def wordlist_search(wordlist, image):
-    # TODO: Use wordlist to search images. Both will be passed in as strings
-    # Consider what reports can be generated from this
-    # More parameters may be necessary
-
-    # PERSON 3
-    pass
-
-def generate_report(data):
-    # TODO: what form should our data be stored in?
-    # TODO: how can we generate a report?
-
-    # PERSON 4
-    pass
 
 if __name__ == '__main__':
     main()
