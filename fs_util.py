@@ -46,8 +46,10 @@ def parse_istat_metadata(fs_type: str, filesystem: str, inode: int):
     istat = subprocess.run("istat -f %s %s %d" % (fs_type, filesystem, inode),
                            capture_output=True)
     if fs_type == "ntfs":
+        # TODO: parse istat NTFS output
         pass
     elif fs_type == "fat":
+        # TODO: parse istat FAT output
         pass
     return
 
