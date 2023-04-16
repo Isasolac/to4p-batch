@@ -28,16 +28,24 @@ def main():
         print(output)
 
         filesystem_lines = []
-        useful_data = False
+        fs_data = False
 
+        # Parse the output of mmls into information about the allocation of each partition
+        # As well as reporting metadata
         for line in output.splitlines():
-            if useful_data:
-                parse_mmls_line(line)
-            else:
-                #TODO: parse header for info
+            if fs_data:
                 pass
-            if "Slot" in line:
-                useful_data = True
+                #parse_mmls_line(line)
+            elif "Units" in line:
+                tokens = line.split()
+
+                # Sector size is in bytes
+                # TODO: store this info in data structure
+                sector_size = int((tokens[3].partition("-"))[0])
+                print("sector size is: "+str(sector_size))
+
+            elif "Slot" in line:
+                fs_data = True
 
 '''
 count: the number ID of the resulting carved filesystem ex "1_1"
