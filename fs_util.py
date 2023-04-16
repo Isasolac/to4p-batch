@@ -29,24 +29,24 @@ def get_inode(fs_type: str, filesystem: str, cluster: int):
     """
     ifind = subprocess.run(
         "ifind -f %s %s -d %d" % (fs_type, filesystem, cluster), 
-        capture_output=True)
+        capture_output=True, shell=True)
     return ifind.stdout
 
-def parse_istat_metadata(fs_type: str, filesystem: str, inode: int):
+def parse_istat_metadata(fs_type: str, filesystem: str, inode: str):
     """ Retrieves the metadata about a given inode in the given filesystem
 
     Params:
     fs_type: str: The type of filesystem (NTFS, FAT, etc.)
     filesystem: str: The path to the filesystem image file
-    inode: int: The inode to retrieve the metadata about
+    inode: str: The inode to retrieve the metadata about
 
     Returns:
         The File created, modified, and accessed times, including the MFT 
         modified time for NTFS, and a check for whether the 
         $STANDARD_INFORMATION times match the $FILE_NAME times.
     """
-    istat = subprocess.run("istat -f %s %s %d" % (fs_type, filesystem, inode),
-                           capture_output=True)
+    istat = subprocess.run("istat -f %s %s %s" % (fs_type, filesystem, inode),
+                           capture_output=True, shell=True)
     istat_out = istat.stdout.decode()
     if fs_type == "ntfs":
         # TODO: parse istat NTFS output
@@ -67,17 +67,17 @@ def parse_istat_metadata(fs_type: str, filesystem: str, inode: int):
         times = times.split("\n")[:3]
         return times
 
-def get_filepath(fs_type: str, filesystem: str, inode: int):
+def get_filepath(fs_type: str, filesystem: str, inode: str):
     """ Retrieves the file path of the given inode in the given filesystem
 
     Params:
     fs_type: str: The type of the filesystem (NTFS, FAT, etc.)
     filesystem: str: The path to the filesystem image file
-    inode: int: The inode to retrieve the metadata about
+    inode: str: The inode to retrieve the metadata about
 
     Returns: 
     The file path of the given inode in the given filesystem
     """
-    ffind = subprocess.run("ffind -f %s %s %d" % (fs_type, filesystem, inode),
-                           capture_output=True)
+    ffind = subprocess.run("ffind -f %s %s %s" % (fs_type, filesystem, inode),
+                           capture_output=True, shell=True)
     return ffind.stdout

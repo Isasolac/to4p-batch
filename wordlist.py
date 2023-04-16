@@ -59,9 +59,15 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
     found_files = {}
     for match in matches_str.split("\n"):
         match_cluster = fs_util.get_sector_or_cluster(match, fs_data.cluster_size, verbose)
-        match_inode = fs_util.get_inode(fs_data.fs_type, filesystem, match_cluster)
-        match_filepath = fs_util.get_filepath(fs_data.fs_type, filesystem, match_inode)
-        found_files[match] = match_filepath + " (Inode: " + str(match_inode) + ")"
+        match_inode = fs_util.get_inode(fs_data.fs_type, filesystem, match_cluster).decode()
+        if match_inode.startswith("Inode not found"):
+            found_files[match] = "Cluster: %d (Inode not found)" % match_cluster
+        else:
+            # match_inode =
+            match_filepath = fs_util.get_filepath(fs_data.fs_type, filesystem, match_inode)
+            found_files[match] = match_filepath + " (Inode: " + str(match_inode) + ")"
+        # TODO: check for unable to find inode, then print cluster and that it 
+        # was unable to find a matching inode
     return found_files, occurrences
 
 
@@ -92,19 +98,19 @@ def get_matches(wordlist: list, image: str, exclude_list: list = [],
     if verbose:
         print("Extracting strings from %s" % image)
     stringsproc = subprocess.run("strings -eS -td " + image, 
-                                 capture_output=True)
+                                 capture_output=True, shell=True)
     strings = stringsproc.stdout
     if verbose: 
         print("Searching for strings in wordlist")
     grepproc = subprocess.run("grep -i -w -E '" + "|".join(wordlist) + "'", 
-                              input=strings, capture_output=True)
+                              input=strings, capture_output=True, shell=True)
     foundstrings = grepproc.stdout
     if len(exclude_list) > 0:
         if verbose:
             print("Removing strings in exclude list")
         invgrepproc = subprocess.run(
             "grep -i -v -E '" + "|".join(exclude_list) + "'", 
-            input=foundstrings, capture_output=True)
+            input=foundstrings, capture_output=True, shell=True)
         foundstrings = invgrepproc.stdout
     return foundstrings.decode() # .split("\n")
 
