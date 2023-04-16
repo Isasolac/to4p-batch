@@ -41,17 +41,31 @@ def parse_istat_metadata(fs_type: str, filesystem: str, inode: int):
     inode: int: The inode to retrieve the metadata about
 
     Returns:
-
+        The File created, modified, and accessed times, including the MFT 
+        modified time for NTFS, and a check for whether the 
+        $STANDARD_INFORMATION times match the $FILE_NAME times.
     """
     istat = subprocess.run("istat -f %s %s %d" % (fs_type, filesystem, inode),
                            capture_output=True)
+    istat_out = istat.stdout.decode()
     if fs_type == "ntfs":
         # TODO: parse istat NTFS output
-        pass
+        chunks = istat_out.split("Attribute Values:\n")
+        std_info_times = chunks[1].split("\n\n")[0]
+        std_info_times = std_info_times.split("\n")[-4:]
+        file_name_times = chunks[2].split("\n\n")[0]
+        file_name_times = file_name_times.split("\n")[-4:]
+        matching = True
+        for i in range(4):
+            if std_info_times[i] != file_name_times[i]:
+                # Modified Standard Info times!
+                matching = False
+        return std_info_times, file_name_times, matching
     elif fs_type == "fat":
         # TODO: parse istat FAT output
-        pass
-    return
+        times = istat_out.split("Directory Entry Times:\n")[1]
+        times = times.split("\n")[:3]
+        return times
 
 def get_filepath(fs_type: str, filesystem: str, inode: int):
     """ Retrieves the file path of the given inode in the given filesystem
