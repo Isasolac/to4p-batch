@@ -17,7 +17,7 @@ class FileSystem(ABC):
         self.dd_image_path = dd_image_path
 
     @abstractmethod
-    def is_valid(self):
+    def is_valid(self)
         pass
 
     @abstractmethod
@@ -36,6 +36,9 @@ class NTFS(FileSystem):
         self.size_of_mft_entries = None
         self.parse(output)
 
+    def is_valid():
+        if self.type != SupportedTypes.NTFS:
+            raise
     def parse(self, fsstat_output):
         for line in fsstat_output: 
             if line.startswith(SECTOR_SIZE_PREFIX):
@@ -112,3 +115,9 @@ def fat_parse(fat):
     
     # PERSON 2
     pass
+
+fat16 = FAT16("./fat.dd")
+ntfs = NTFS("./ntfs.dd")
+print(fat16)
+print(ntfs)
+

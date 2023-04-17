@@ -9,8 +9,8 @@ def check_if_file_exists(path):
         raise FileNotFoundError("Could not find disk image!")
 
 def run_command(command):
-    process = subprocess.run(shlex.split(command), text=True)
-    return process.returncode, process.stdout, process.stderr
+    process = subprocess.run(shlex.split(command), shell=True, capture_output=True)
+    return process.returncode, process.stdout.decode(), process.stderr.decode()
 
 def mmls(dd_image_path):
     check_if_file_exists(dd_image_path)
@@ -34,4 +34,4 @@ def get_fs_type(dd_image_path):
                 elif line.endswith("NTFS"):
                     return (SupportedTypes.NTFS, lines)
                 
-    return (SupportedTypes.Unsupported, None)
+    return (SupportedTypes.UNSUPPORTED, None)
