@@ -46,7 +46,9 @@ def main():
 
                 # Builds 2 layer dictionary: main key is partition ID
                 data = parse_mmls_line(line)
-                fs_data[tokens[0]] = data
+                fs_key = tokens[0].partition(":")[0]
+                print(fs_key)
+                fs_data[fs_key] = data
 
                 # If is_partition, parse out the file system and store the name
                 if data["Partition"]:
