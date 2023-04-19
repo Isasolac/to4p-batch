@@ -68,7 +68,7 @@ def main():
                     # Store the name in the data structure
                     data["Name"] = name
 
-                    # TODO: mmcat out the file system
+                    # mmcat out the file system
                     command = 'mmcat ./'+image+' '+tokens[0]+' > '+name
                     print(command)
                     stream = os.popen(command)
@@ -134,6 +134,8 @@ def parse_mmls_line(line):
 
     if tokens[1] != "-----" and tokens[1] != "Meta":
         data["Partition"] = True
+    else:
+        data["Partition"] = False
 
     return data
 
