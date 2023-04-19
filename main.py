@@ -46,12 +46,13 @@ def main():
 
                 # Builds 2 layer dictionary: main key is partition ID
                 data = parse_mmls_line(line)
-                fs_key = tokens[0].partition(":")[0]
-                print(fs_key)
+                fs_key = str(int(tokens[0].partition(":")[0]))
+                #print(fs_key)
                 fs_data[fs_key] = data
 
                 # If is_partition, parse out the file system and store the name
                 if data["Partition"]:
+                    print(data["Description"])
                     # Find the type of file system
                     if "FAT32" in data["Description"]:
                         fs_type = "fat32"
@@ -71,7 +72,7 @@ def main():
                     data["Name"] = name
 
                     # mmcat out the file system
-                    command = 'mmcat ./'+image+' '+tokens[0]+' > '+name
+                    command = 'mmcat ./'+image+' '+fs_key+' > '+name
                     print(command)
                     stream = os.popen(command)
 
@@ -124,17 +125,20 @@ Returns a tuple with: (slot number, is_partition, start, end, length, descriptio
 def parse_mmls_line(line):
     tokens = line.split()
 
-
+    # Reconstruct description
+    description = ""
+    for i in range(5,len(tokens)):
+        description += tokens[i]+ " "
 
     data = {"Slot": tokens[1],
     "Start": tokens[2],
     "End": tokens[3],
     "Size": tokens[4],
-    "Description": tokens[5]}
+    "Description": description}
 
     #slot_partition = line.partition(":")
 
-    if tokens[1] != "-----" and tokens[1] != "Meta":
+    if tokens[1] != "-------" and tokens[1] != "Meta":
         data["Partition"] = True
     else:
         data["Partition"] = False
