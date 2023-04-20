@@ -27,7 +27,7 @@ def main():
     if args.wordlist:
         words = parse_wordlist(args.wordlist)
 
-        pass
+        print(words)
 
     for image in args.images:
         print(image)
@@ -35,7 +35,7 @@ def main():
         # Step 1: use mmls to find filesystems
         stream = os.popen('mmls ./'+image)
         output = stream.read()
-        print(output)
+        #print(output)
 
         volume_data = {"Volume": "", "Sector_Size": -1}
         fs_data = dict()
@@ -87,7 +87,7 @@ def main():
 
                     # use fsstat to get the file system type
                     fs_type = get_fs_type(name)
-                    print(fs_type+fs_key)
+                    #print(fs_type+fs_key)
 
                     data["Type"] = fs_type
 
@@ -185,9 +185,9 @@ def parse_wordlist(wordlist_file):
     words = []
 
     with open(wordlist_file, 'r') as file:
-        line = file.readline()
-
-        words.append(line)
+        
+        for word in file.readlines():
+            words.append(word.strip('\n'))
 
     return words
 
