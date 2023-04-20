@@ -40,7 +40,7 @@ class NTFS(FileSystem):
 
     def is_valid(self):
         if self.type != SupportedTypes.NTFS:
-            raise TypeError("Incorrect type provided: " + self.type)
+            raise TypeError("Incorrect type provided")
         
     def parse(self, fsstat_output):
         for line in fsstat_output: 
@@ -49,13 +49,13 @@ class NTFS(FileSystem):
             if line.startswith(CLUSTER_SIZE_PREFIX):
                 self.cluster_size = int(line[len(CLUSTER_SIZE_PREFIX):])
             if line.startswith(VOLUME_SERIAL_NUMBER_PREFIX):
-                self.volume_serial_number = int(line[len(VOLUME_SERIAL_NUMBER_PREFIX):])
+                self.volume_serial_number = int(line[len(VOLUME_SERIAL_NUMBER_PREFIX):], 16)
             if line.startswith(FIRST_CLUSTER_OF_MFT_PREFIX):
                 self.first_cluster_of_mft = int(line[len(FIRST_CLUSTER_OF_MFT_PREFIX):])
             if line.startswith(FIRST_CLUSTER_OF_MFT_MIRROR_PREFIX):
                 self.first_cluster_of_mft_mirror = int(line[len(FIRST_CLUSTER_OF_MFT_MIRROR_PREFIX):])
             if line.startswith(SIZE_OF_MFT_ENTRIES_PREFIX):
-                self.size_of_mft_entries = int(line[len(SIZE_OF_MFT_ENTRIES_PREFIX):])
+                self.size_of_mft_entries = line[len(SIZE_OF_MFT_ENTRIES_PREFIX):]
 
 
 class FAT16(FileSystem):
@@ -71,8 +71,8 @@ class FAT16(FileSystem):
         self.parse(output)
 
     def is_valid(self):
-        if self.type != SupportedTypes.NTFS:
-            raise TypeError("Incorrect type provided: " + self.type)
+        if self.type != SupportedTypes.FAT16:
+            raise TypeError("Incorrect type provided")
 
     def parse(self, fsstat_output):
         for line in fsstat_output: 
@@ -81,11 +81,11 @@ class FAT16(FileSystem):
             if line.startswith(CLUSTER_SIZE_PREFIX):
                 self.cluster_size = int(line[len(CLUSTER_SIZE_PREFIX):])
             if line.startswith(VOLUME_ID_PREFIX):
-                self.volume_id = int(line[len(VOLUME_ID_PREFIX):])
+                self.volume_id = int(line[len(VOLUME_ID_PREFIX):], 16)
             if line.startswith(SECTORS_BEFORE_FILE_SYSTEM_PREFIX):
                 self.sectors_before_file_system = int(line[len(SECTORS_BEFORE_FILE_SYSTEM_PREFIX):])
             if line.startswith(TOTAL_RANGE_PREFIX):
-                self.total_range = int(line[len(TOTAL_RANGE_PREFIX):])
+                self.total_range = line[len(TOTAL_RANGE_PREFIX):]
 
 class FAT32(FileSystem):
     def __init__(self, dd_image_path):
@@ -100,8 +100,8 @@ class FAT32(FileSystem):
         self.parse(output)
 
     def is_valid(self):
-        if self.type != SupportedTypes.NTFS:
-            raise TypeError("Incorrect type provided: " + self.type)
+        if self.type != SupportedTypes.FAT32:
+            raise TypeError("Incorrect type provided")
 
     def parse(self, fsstat_output):
         for line in fsstat_output: 
@@ -110,11 +110,11 @@ class FAT32(FileSystem):
             if line.startswith(CLUSTER_SIZE_PREFIX):
                 self.cluster_size = int(line[len(CLUSTER_SIZE_PREFIX):])
             if line.startswith(VOLUME_ID_PREFIX):
-                self.volume_id = int(line[len(VOLUME_ID_PREFIX):])
+                self.volume_id = int(line[len(VOLUME_ID_PREFIX):], 16)
             if line.startswith(SECTORS_BEFORE_FILE_SYSTEM_PREFIX):
                 self.sectors_before_file_system = int(line[len(SECTORS_BEFORE_FILE_SYSTEM_PREFIX):])
             if line.startswith(TOTAL_RANGE_PREFIX):
-                self.total_range = int(line[len(TOTAL_RANGE_PREFIX):])
+                self.total_range =line[len(TOTAL_RANGE_PREFIX):]
 
 
 def ntfs_parse(ntfs):

@@ -9,7 +9,7 @@ def check_if_file_exists(path):
         raise FileNotFoundError("Could not find disk image!")
 
 def run_command(command):
-    process = subprocess.run(shlex.split(command), shell=True, capture_output=True)
+    process = subprocess.run(command, shell=True, capture_output=True)
     return process.returncode, process.stdout.decode(), process.stderr.decode()
 
 def mmls(dd_image_path):
