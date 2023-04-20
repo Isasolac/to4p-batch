@@ -72,10 +72,10 @@ def main():
                     fs_type = 'partition'
 
                     # Create the name
-                    name = fs_type + "_" + str(fs_id) + ".dd"
+                    name = image_dir_name+"/"+fs_type + "_" + str(fs_id) + ".dd"
 
                     # Store the name in the data structure
-                    data["Name"] = image_dir_name+"/"+name
+                    data["Name"] = name
 
                     # mmcat out the file system
                     command = 'mmcat ./'+image+' '+fs_key+' > '+name
