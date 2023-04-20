@@ -76,6 +76,7 @@ def main():
                     command = 'mmcat ./'+image+' '+fs_key+' > '+name
                     print(command)
                     stream = os.popen(command)
+                    output = stream.read()
 
                     # use fsstat to get the file system type
                     fs_type = get_fs_type(name)
@@ -158,14 +159,17 @@ def get_fs_type(carve_name):
     # Run fsstat on carved image
     stream = os.popen('fsstat ./'+carve_name)
     output = stream.read()
-    
-    for line in output:
-        if "File System Type:" in line:
-            # get fs type
-            print(line)
-            fs_type = line.split()[3]
 
-            break
+    fs_type = "unknown"
+    
+    if "File System Type: NTFS" in output:
+        # get fs type
+        fs_type = "NTFS"
+
+    elif "File System Type: FAT16" in output:
+        fs_type = "FAT16"
+    elif "File System Type: FAT32" in output:
+        fs_type = "FAT32"
     
     return fs_type
 
