@@ -17,18 +17,31 @@ def main():
     parser = argparse.ArgumentParser(description="Process images")
     parser.add_argument('images', metavar='image.dd', nargs='+',
                         type=str)
+    parser.add_argument('-w', '--wordlist', metavar='wordlist.txt',
+                        type=str, required=False)
     args = parser.parse_args()
 
     # Collects the dictionary information about each image
     image_data_list = []
 
+    if args.wordlist:
+        words = parse_wordlist(args.wordlist)
+
+        print(words)
+
+    image_id = 0
+
     for image in args.images:
         print(image)
+
+        image_dir_name = "image"+"_"+str(image_id)
+
+        stream = os.popen('mkdir '+image_dir_name)
 
         # Step 1: use mmls to find filesystems
         stream = os.popen('mmls ./'+image)
         output = stream.read()
-        print(output)
+        #print(output)
 
         volume_data = {"Volume": "", "Sector_Size": -1}
         fs_data = dict()
@@ -39,6 +52,8 @@ def main():
         # Parse the output of mmls into information about the allocation of each partition
         # As well as reporting metadata
         for line in output.splitlines():
+
+            # Make a directory for the image files
 
             # Parses the main filesystem data
             if fs_data_start:
@@ -52,31 +67,29 @@ def main():
 
                 # If is_partition, parse out the file system and store the name
                 if data["Partition"]:
-                    print(data["Description"])
+                    #print(data["Description"])
                     # Find the type of file system
-                    if "FAT32" in data["Description"]:
-                        fs_type = "fat32"
-                    elif "FAT16" in data["Description"]:
-                        fs_type = "fat16"
-                    elif "NTFS" in data["Description"]:
-                        fs_type = "ntfs"
-                    else:
-                        fs_type = "unknown"
-
-                    data["Type"] = fs_type
+                    fs_type = 'partition'
 
                     # Create the name
-                    name = fs_type + "_" + str(fs_id) + ".dd"
+                    name = image_dir_name+"/"+fs_type + "_" + str(fs_id) + ".dd"
 
                     # Store the name in the data structure
                     data["Name"] = name
 
                     # mmcat out the file system
                     command = 'mmcat ./'+image+' '+fs_key+' > '+name
-                    print(command)
+                    #print(command)
                     stream = os.popen(command)
+                    output = stream.read()
 
-                    fs_data[tokens[0]] = data
+                    # use fsstat to get the file system type
+                    fs_type = get_fs_type(name)
+                    #print(fs_type+fs_key)
+
+                    data["Type"] = fs_type
+
+                    fs_data[fs_key] = data
 
                     # increment the fs_id so names don't overlap
                     fs_id = fs_id+1
@@ -105,11 +118,27 @@ def main():
                 fs_data_start = True
         
         # Add this to the collection
-        image_data_list.append(volume_data)
+        image_data_list.append((volume_data,fs_data))
+        
+
+        # Print out filesystem report
+        for key in fs_data:
+            data = fs_data[key]
+
+            if data["Partition"]:
+                print("Slot "+key+" is a partition,")
+                print("File system type: "+data["Type"])
+                print("Carved name = "+data["Name"])
+        
+        image_id += 1
     
     # TODO: Add calls to lines that parse the filesystem data
 
-    # TODO: Add calls to lines that parse the wordlist
+    if args.wordlist:
+        # TODO: Add calls to lines that parse the wordlist
+        # The string list of words is called "words"
+        pass
+    
 
     # TODO: Generate the report
 
@@ -120,7 +149,7 @@ def cat_slot(slot_num, image_name, count):
     pass
 
 '''
-Returns a tuple with: (slot number, is_partition, start, end, length, description)
+Returns a dictionary with slot information
 '''
 def parse_mmls_line(line):
     tokens = line.split()
@@ -146,9 +175,35 @@ def parse_mmls_line(line):
     return data
 
     
+def get_fs_type(carve_name):
+
+    # Run fsstat on carved image
+    stream = os.popen('fsstat ./'+carve_name)
+    output = stream.read()
+
+    fs_type = "unknown"
     
+    if "File System Type: NTFS" in output:
+        # get fs type
+        fs_type = "NTFS"
+
+    elif "File System Type: FAT16" in output:
+        fs_type = "FAT16"
+    elif "File System Type: FAT32" in output:
+        fs_type = "FAT32"
+    
+    return fs_type
 
 
+def parse_wordlist(wordlist_file):
+    words = []
+
+    with open(wordlist_file, 'r') as file:
+        
+        for word in file.readlines():
+            words.append(word.strip('\n'))
+
+    return words
 
 
 if __name__ == '__main__':
