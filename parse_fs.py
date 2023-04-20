@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from tsk_utils import get_fs_type
+from fs import SupportedTypes
 
 SECTOR_SIZE_PREFIX = "Sector Size: "
 CLUSTER_SIZE_PREFIX = "Cluster Size: "
@@ -17,7 +18,7 @@ class FileSystem(ABC):
         self.dd_image_path = dd_image_path
 
     @abstractmethod
-    def is_valid(self)
+    def is_valid(self):
         pass
 
     @abstractmethod
@@ -28,6 +29,7 @@ class NTFS(FileSystem):
     def __init__(self, dd_image_path):
         super().__init__(dd_image_path)
         self.type, output = get_fs_type(self.dd_image_path)
+        self.is_valid()
         self.sector_size = None
         self.cluster_size = None
         self.volume_serial_number = None
@@ -36,9 +38,10 @@ class NTFS(FileSystem):
         self.size_of_mft_entries = None
         self.parse(output)
 
-    def is_valid():
+    def is_valid(self):
         if self.type != SupportedTypes.NTFS:
-            raise
+            raise TypeError("Incorrect type provided: " + self.type)
+        
     def parse(self, fsstat_output):
         for line in fsstat_output: 
             if line.startswith(SECTOR_SIZE_PREFIX):
@@ -59,12 +62,17 @@ class FAT16(FileSystem):
     def __init__(self, dd_image_path):
         super().__init__(dd_image_path)
         self.type, output = get_fs_type(self.dd_image_path)
+        self.is_valid()
         self.sector_size = None
         self.cluster_size = None
         self.volume_id = None
         self.sectors_before_file_system = None
         self.total_range = None
         self.parse(output)
+
+    def is_valid(self):
+        if self.type != SupportedTypes.NTFS:
+            raise TypeError("Incorrect type provided: " + self.type)
 
     def parse(self, fsstat_output):
         for line in fsstat_output: 
@@ -83,12 +91,17 @@ class FAT32(FileSystem):
     def __init__(self, dd_image_path):
         super().__init__(dd_image_path)
         self.type, output = get_fs_type(self.dd_image_path)
+        self.is_valid()
         self.sector_size = None
         self.cluster_size = None
         self.volume_id = None
         self.sectors_before_file_system = None
         self.total_range = None
         self.parse(output)
+
+    def is_valid(self):
+        if self.type != SupportedTypes.NTFS:
+            raise TypeError("Incorrect type provided: " + self.type)
 
     def parse(self, fsstat_output):
         for line in fsstat_output: 
