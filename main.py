@@ -29,8 +29,14 @@ def main():
 
         print(words)
 
+    image_id = 0
+
     for image in args.images:
         print(image)
+
+        image_dir_name = image+"_"+str(image_id)
+
+        stream = os.popen('mkdir '+image_dir_name)
 
         # Step 1: use mmls to find filesystems
         stream = os.popen('mmls ./'+image)
@@ -47,6 +53,8 @@ def main():
         # As well as reporting metadata
         for line in output.splitlines():
 
+            # Make a directory for the image files
+
             # Parses the main filesystem data
             if fs_data_start:
                 tokens = line.split()
@@ -61,23 +69,13 @@ def main():
                 if data["Partition"]:
                     print(data["Description"])
                     # Find the type of file system
-                    '''
-                    if "FAT32" in data["Description"]:
-                        fs_type = "fat32"
-                    elif "FAT16" in data["Description"]:
-                        fs_type = "fat16"
-                    elif "NTFS" in data["Description"]:
-                        fs_type = "ntfs"
-                    else:
-                        fs_type = "unknown"
-                    '''
-                    fs_type = 'unknown'
+                    fs_type = 'partition'
 
                     # Create the name
                     name = fs_type + "_" + str(fs_id) + ".dd"
 
                     # Store the name in the data structure
-                    data["Name"] = name
+                    data["Name"] = image_dir_name+"/"+name
 
                     # mmcat out the file system
                     command = 'mmcat ./'+image+' '+fs_key+' > '+name
@@ -121,6 +119,18 @@ def main():
         
         # Add this to the collection
         image_data_list.append(volume_data)
+        
+
+        # Print out filesystem report
+        for key in fs_data:
+            data = fs_data[key]
+
+            if data["Partition"]:
+                print("Slot "+key+" is a partition,")
+                print("File system type: "+data["Type"])
+                print("Carved name = "+data["Name"])
+        
+        image_id += 1
     
     # TODO: Add calls to lines that parse the filesystem data
 
