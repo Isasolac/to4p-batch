@@ -67,7 +67,7 @@ def main():
 
                 # If is_partition, parse out the file system and store the name
                 if data["Partition"]:
-                    print(data["Description"])
+                    #print(data["Description"])
                     # Find the type of file system
                     fs_type = 'partition'
 
@@ -79,7 +79,7 @@ def main():
 
                     # mmcat out the file system
                     command = 'mmcat ./'+image+' '+fs_key+' > '+name
-                    print(command)
+                    #print(command)
                     stream = os.popen(command)
                     output = stream.read()
 
