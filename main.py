@@ -34,7 +34,7 @@ def main():
     for image in args.images:
         print(image)
 
-        image_dir_name = image+"_"+str(image_id)
+        image_dir_name = "image"+"_"+str(image_id)
 
         stream = os.popen('mkdir '+image_dir_name)
 
@@ -118,7 +118,7 @@ def main():
                 fs_data_start = True
         
         # Add this to the collection
-        image_data_list.append(volume_data)
+        image_data_list.append((volume_data,fs_data))
         
 
         # Print out filesystem report
