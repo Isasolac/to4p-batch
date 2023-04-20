@@ -54,6 +54,7 @@ def main():
                 if data["Partition"]:
                     print(data["Description"])
                     # Find the type of file system
+                    '''
                     if "FAT32" in data["Description"]:
                         fs_type = "fat32"
                     elif "FAT16" in data["Description"]:
@@ -62,8 +63,8 @@ def main():
                         fs_type = "ntfs"
                     else:
                         fs_type = "unknown"
-
-                    data["Type"] = fs_type
+                    '''
+                    fs_type = 'unknown'
 
                     # Create the name
                     name = fs_type + "_" + str(fs_id) + ".dd"
@@ -76,7 +77,13 @@ def main():
                     print(command)
                     stream = os.popen(command)
 
-                    fs_data[tokens[0]] = data
+                    # use fsstat to get the file system type
+                    fs_type = get_fs_type(name)
+                    print(fs_type+fs_key)
+
+                    data["Type"] = fs_type
+
+                    fs_data[fs_key] = data
 
                     # increment the fs_id so names don't overlap
                     fs_id = fs_id+1
@@ -120,7 +127,7 @@ def cat_slot(slot_num, image_name, count):
     pass
 
 '''
-Returns a tuple with: (slot number, is_partition, start, end, length, description)
+Returns a dictionary with slot information
 '''
 def parse_mmls_line(line):
     tokens = line.split()
@@ -146,7 +153,21 @@ def parse_mmls_line(line):
     return data
 
     
+def get_fs_type(carve_name):
+
+    # Run fsstat on carved image
+    stream = os.popen('fsstat ./'+carve_name)
+    output = stream.read()
     
+    for line in output:
+        if "File System Type:" in line:
+            # get fs type
+            print(line)
+            fs_type = line.split()[3]
+
+            break
+    
+    return fs_type
 
 
 
