@@ -49,23 +49,23 @@ def parse_istat_metadata(fs_type: str, filesystem: str, inode: str):
                            capture_output=True, shell=True)
     istat_out = istat.stdout.decode()
     if fs_type == "ntfs":
-        # TODO: parse istat NTFS output
         chunks = istat_out.split("Attribute Values:\n")
         std_info_times = chunks[1].split("\n\n")[0]
         std_info_times = std_info_times.split("\n")[-4:]
         file_name_times = chunks[2].split("\n\n")[0]
         file_name_times = file_name_times.split("\n")[-4:]
-        matching = True
+        matching = [True] * 4
         for i in range(4):
             if std_info_times[i] != file_name_times[i]:
                 # Modified Standard Info times!
-                matching = False
-        return std_info_times, file_name_times, matching
+                matching[i] = False
+        return {"Standard_Info_Times": std_info_times, 
+                "File_Name_Times": file_name_times, 
+                "Matching": matching}
     elif fs_type == "fat":
-        # TODO: parse istat FAT output
         times = istat_out.split("Directory Entry Times:\n")[1]
         times = times.split("\n")[:3]
-        return times
+        return {"Times": times}
 
 def get_filepath(fs_type: str, filesystem: str, inode: str):
     """ Retrieves the file path of the given inode in the given filesystem
