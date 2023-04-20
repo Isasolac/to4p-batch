@@ -124,7 +124,11 @@ def main():
     
     # TODO: Add calls to lines that parse the filesystem data
 
-    # TODO: Add calls to lines that parse the wordlist
+    if args.wordlist:
+        # TODO: Add calls to lines that parse the wordlist
+        # The string list of words is called "words"
+        pass
+    
 
     # TODO: Generate the report
 
