@@ -17,10 +17,17 @@ def main():
     parser = argparse.ArgumentParser(description="Process images")
     parser.add_argument('images', metavar='image.dd', nargs='+',
                         type=str)
+    parser.add_argument('-w', '--wordlist', metavar='wordlist.txt',
+                        type=str, required=False)
     args = parser.parse_args()
 
     # Collects the dictionary information about each image
     image_data_list = []
+
+    if args.wordlist:
+        words = parse_wordlist(args.wordlist)
+
+        pass
 
     for image in args.images:
         print(image)
@@ -174,6 +181,15 @@ def get_fs_type(carve_name):
     return fs_type
 
 
+def parse_wordlist(wordlist_file):
+    words = []
+
+    with open(wordlist_file, 'r') as file:
+        line = file.readline()
+
+        words.append(line)
+
+    return words
 
 
 if __name__ == '__main__':
