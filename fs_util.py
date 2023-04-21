@@ -29,41 +29,55 @@ def get_inode(fs_type: str, filesystem: str, cluster: int):
     """
     ifind = subprocess.run(
         "ifind -f %s %s -d %d" % (fs_type, filesystem, cluster), 
-        capture_output=True)
+        capture_output=True, shell=True)
     return ifind.stdout
 
-def parse_istat_metadata(fs_type: str, filesystem: str, inode: int):
+def parse_istat_metadata(fs_type: str, filesystem: str, inode: str):
     """ Retrieves the metadata about a given inode in the given filesystem
 
     Params:
     fs_type: str: The type of filesystem (NTFS, FAT, etc.)
     filesystem: str: The path to the filesystem image file
-    inode: int: The inode to retrieve the metadata about
+    inode: str: The inode to retrieve the metadata about
 
     Returns:
-
+        The File created, modified, and accessed times, including the MFT 
+        modified time for NTFS, and a check for whether the 
+        $STANDARD_INFORMATION times match the $FILE_NAME times.
     """
-    istat = subprocess.run("istat -f %s %s %d" % (fs_type, filesystem, inode),
-                           capture_output=True)
+    istat = subprocess.run("istat -f %s %s %s" % (fs_type, filesystem, inode),
+                           capture_output=True, shell=True)
+    istat_out = istat.stdout.decode()
     if fs_type == "ntfs":
-        # TODO: parse istat NTFS output
-        pass
+        chunks = istat_out.split("Attribute Values:\n")
+        std_info_times = chunks[1].split("\n\n")[0]
+        std_info_times = std_info_times.split("\n")[-4:]
+        file_name_times = chunks[2].split("\n\n")[0]
+        file_name_times = file_name_times.split("\n")[-4:]
+        matching = [True] * 4
+        for i in range(4):
+            if std_info_times[i] != file_name_times[i]:
+                # Modified Standard Info times!
+                matching[i] = False
+        return {"Standard_Info_Times": std_info_times, 
+                "File_Name_Times": file_name_times, 
+                "Matching": matching}
     elif fs_type == "fat":
-        # TODO: parse istat FAT output
-        pass
-    return
+        times = istat_out.split("Directory Entry Times:\n")[1]
+        times = times.split("\n")[:3]
+        return {"Times": times}
 
-def get_filepath(fs_type: str, filesystem: str, inode: int):
+def get_filepath(fs_type: str, filesystem: str, inode: str):
     """ Retrieves the file path of the given inode in the given filesystem
 
     Params:
     fs_type: str: The type of the filesystem (NTFS, FAT, etc.)
     filesystem: str: The path to the filesystem image file
-    inode: int: The inode to retrieve the metadata about
+    inode: str: The inode to retrieve the metadata about
 
     Returns: 
     The file path of the given inode in the given filesystem
     """
-    ffind = subprocess.run("ffind -f %s %s %d" % (fs_type, filesystem, inode),
-                           capture_output=True)
+    ffind = subprocess.run("ffind -f %s %s %s" % (fs_type, filesystem, inode),
+                           capture_output=True, shell=True)
     return ffind.stdout
