@@ -9,7 +9,7 @@ def generate_report(data):
     
 #output_html_path=os.getcwd()+"//"+"out.html"
 
-# Get current date and time
+    # Get current date and time
     now = datetime.datetime.now()
     current_date = now.strftime("%B %d, %Y")
     current_time = now.strftime("%H:%M:%S")
@@ -23,6 +23,7 @@ def generate_report(data):
     MD5_result = "MD5resulthere"
     SHA1_result = "SHA1resulthere"
 
+    # Define HTML Output file name
     htmloutputfile = image_file_name + ".html"
 
     # Disk Image Information Variable
@@ -52,7 +53,7 @@ def generate_report(data):
     ContentInfoLine1_SectorSize = "512"
     ContentInfoLine2_Clustersize = "1024"
 
-    # content search
+    # Content search
     searchwordlist = "wordlist here"
 
     # Search result information
