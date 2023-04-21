@@ -1,2 +1,4 @@
 *.dd
 __pycache__
+*.html
+.DS_Store
