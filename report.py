@@ -26,36 +26,50 @@ def generate_report(data):
     htmloutputfile = image_file_name + ".html"
 
     # Disk Image Information Variable
-    DiskInfoLine1 = "DOS Partition Table"
-    DiskInfoLine2 = "Offset Sector: 0"
-    DiskInfoLine3 = "Units are in 512-byte sectors"
+    DiskInfoLine1_DOSorGPT = "DOS Partition Table // GUID Partition Table (EFI)"
+    DiskInfoLine2_OffsetSector = "0"
+    DiskInfoLine3_BytePerSector = "512"
 
     partition1 = ["11", "12", "13", "14", "15", "16"]
     partition2 = ["21", "22", "23", "24", "25", "26"]
 
-    # File System Information Variable
-    FSInfoLine1 = "FAT/NTFS"
-    FSInfoLine2 = "VolumeSerialNumber"
-    FSInfoLine3 = "OEMName"
-    FSInfoLine4 = "VolumeName"
-    FSInfoLine5 = "Version"
+    filesystemtype = "NTFS" # FAT or NTFS
 
-    # Metadata Information Variable
-    MetadataInfoLine1 = "16"
-    MetadataInfoLine2 = "32759"
-    MetadataInfoLine3 = "1024"
-    MetadataInfoLine4 = "4096"
-    MetadataInfoLine5 = "0 - 251"
-    MetadataInfoLine6 = "5"
+    # File System Information Variable
+    FSInfoLine1_FileSystemType = filesystemtype
+    FSInfoLine2_VolumeSerialNumber = "VolumeSerialNumberHere"
+
+    # Metadata Information Variable for NTFS
+    MetadataInfoLine1_NTFS_FirstClusterofMFT = "16"
+    MetadataInfoLine2_NTFS_FirstClusterofMFTMirror = "32759"
+    MetadataInfoLine3_NTFS_SizeofMFTEntries = "1024"
+
+    # Metadata Information Variable for FAT
+    MetadataInfoLine1_FAT_SectorBeforeFileSystem = "128"
+    MetadataInfoLine2_FAT_TotalRange = "0 - 204799"
 
     # Content Information Variable
-    ContentInfoLine1 = "512"
-    ContentInfoLine2 = "1024"
-    ContentInfoLine3 = "0 - 65518"
-    ContentInfoLine4 = "0 - 131038"
+    ContentInfoLine1_SectorSize = "512"
+    ContentInfoLine2_Clustersize = "1024"
 
     # content search
     searchwordlist = "wordlist here"
+
+    # Search result information
+    SearchResultLine1_inodeaddress = "inode address here"
+    SearchResultLine2_Filename = "file name here"
+    SearchResultLine3_FileLocation = "File Location here"
+
+    # Standard information Attribute Value for NTFS
+    StdInfoAttLine1_Created = "created timestamp here"
+    StdInfoAttLine2_FileModified = "modifired timestamp here"
+    StdInfoAttLine3_MFTModified = "MFT modified timestamp here"
+    StdInfoAttLine4_Accessed = "accessed timestamp here"
+
+    # Directory Entry Times for both NTFS and FAT
+    DirInfoLine1_Written = "Written timestamp here"
+    DirInfoLine2_Accessed = "Accessed timestamp here"
+    DirInfoLine3_Created = "Created timestamp here"
 
     # Define HTML report structure
     html_opening = f"""
@@ -79,9 +93,9 @@ def generate_report(data):
 
     html_diskinfo = f"""
         <p><b>Disk Image Information</b><br>
-            {DiskInfoLine1}<br>
-            {DiskInfoLine2}<br>
-            {DiskInfoLine3}</p>
+            {DiskInfoLine1_DOSorGPT}<br>
+            Offset Sector: {DiskInfoLine2_OffsetSector}<br>
+            Units are in {DiskInfoLine3_BytePerSector}-byte sectors</p>
     """
 
     html_partitiontableheader = f"""
@@ -106,37 +120,67 @@ def generate_report(data):
         <b>---------------------------------------------------------------------------------------</b>
     """
 
-    html_filesysteminfo = f"""
-        <p><b>Disk Image Information</b><br>
-            File System Type: {FSInfoLine1}<br>
-            {FSInfoLine2}<br>
-            {FSInfoLine3}<br>
-            {FSInfoLine4}<br>
-            {FSInfoLine5}</p>
+    html_filesysteminfo_NTFS = f"""
+        <p><b>File System Information</b><br>
+            File System Type: {FSInfoLine1_FileSystemType}<br>
+            Volume Serial Number: {FSInfoLine2_VolumeSerialNumber}</p>
     """
 
-    html_metadatainto = f"""
+    html_metadatainto_NTFS = f"""
         <p><b>Metadata Information</b><br>
-            First Cluster of MFT: {MetadataInfoLine1}<br>
-            First Cluster of MFT Mirror: {MetadataInfoLine2}<br>
-            Size of MFT Entries: {MetadataInfoLine3} bytes<br>
-            Size of Index Records {MetadataInfoLine4} bytes <br>
-            Range: {MetadataInfoLine5}<br>
-            Root Directory: {MetadataInfoLine6}</p>
+            First Cluster of MFT: {MetadataInfoLine1_NTFS_FirstClusterofMFT}<br>
+            First Cluster of MFT Mirror: {MetadataInfoLine2_NTFS_FirstClusterofMFTMirror}<br>
+            Size of MFT Entries: {MetadataInfoLine3_NTFS_SizeofMFTEntries} bytes</p>
     """
 
-    html_contentinto = f"""
+    html_contentinto_NTFS = f"""
         <p><b>Content Information</b><br>
-            Sector Size: {ContentInfoLine1}<br>
-            Cluster Size: {ContentInfoLine2}<br>
-            Total Cluster Range: {ContentInfoLine3}<br>
-            Total Sector Range: {ContentInfoLine4}</p>
+            Sector Size: {ContentInfoLine1_SectorSize}<br>
+            Cluster Size: {ContentInfoLine2_Clustersize}</p>
+    """
+
+    html_filesysteminfo_FAT = f"""
+        <p><b>File System Information</b><br>
+            File System Type: {FSInfoLine1_FileSystemType}<br>
+            Volume ID: {FSInfoLine2_VolumeSerialNumber}</p>
+    """
+
+    html_metadatainto_FAT = f"""
+        <p><b>Metadata Information</b><br>
+            Sectors before file system: {MetadataInfoLine1_FAT_SectorBeforeFileSystem}<br>
+            Total Range: {MetadataInfoLine2_FAT_TotalRange}</p>
+    """
+
+    html_contentinto_FAT = f"""
+        <p><b>Content Information</b><br>
+            Sector Size: {ContentInfoLine1_SectorSize}<br>
+            Cluster Size: {ContentInfoLine2_Clustersize}</p>
     """
 
     html_searchresult = f"""
-        <p><b>Search Result</b><br><br>
+        <p><b>Wordlist Search Result</b><br><br>
             Search for: {searchwordlist}<br>
-            Result:<br>
+    """
+
+    html_searchresultinfo = f"""
+        <p>Inode address:: {SearchResultLine1_inodeaddress}<br>
+        File name: {SearchResultLine2_Filename}<br>
+        File Location: {SearchResultLine3_FileLocation}<br></p>
+    """
+
+    html_StdInfoAtt_NTFS = f"""
+        <p><b>Standard information Attribute Value</b><br>
+            Created: {StdInfoAttLine1_Created}<br>
+            File Modified: {StdInfoAttLine2_FileModified}<br>
+            MFT Modified: {StdInfoAttLine3_MFTModified}<br>
+            Accessed: {StdInfoAttLine4_Accessed}</p>
+    """
+
+    html_DirectoryEntryTimes = f"""
+        <p><b>Directory Entry Times</b><br>
+            Written: {DirInfoLine1_Written}<br>
+            Accessed: {DirInfoLine2_Accessed}<br>
+            Created: {DirInfoLine3_Created}</p>
     """
 
     html_closing = f"""
@@ -154,7 +198,7 @@ def generate_report(data):
 
         # Disk Image Information (Adding loop later)
         f.write(html_diskinfo)
-        f.write("<p>List Partition Information<br>")
+        f.write("<p><b>List Partition Information</b><br>")
         f.write(html_partitiontableheader)
 
         f.write("<tr>\n")
@@ -171,7 +215,7 @@ def generate_report(data):
 
         # Partition Information (Adding loop later)
         f.write(html_separatesection)
-        f.write("<p><b>## Partition no.</b><br>")
+        f.write("<p><b>## Partition ID:</b><br>")
         f.write(html_partitiontableheader)
 
         f.write("<tr>\n")
@@ -182,13 +226,30 @@ def generate_report(data):
         f.write("</table></p>")
 
         f.write(html_partitioninfo)
-        f.write(html_filesysteminfo)
-        f.write(html_metadatainto)
-        f.write(html_contentinto)
+
+        if filesystemtype == "NTFS":
+            f.write(html_filesysteminfo_NTFS)
+            f.write(html_metadatainto_NTFS)
+            f.write(html_contentinto_NTFS)
+        
+        elif filesystemtype == "FAT":
+            f.write(html_filesysteminfo_FAT)
+            f.write(html_metadatainto_FAT)
+            f.write(html_contentinto_FAT)
+        
 
         # Searching Section
         f.write(html_separatesection)
         f.write(html_searchresult)
+
+        # Search result (Adding loop later)
+        f.write("<p><b>## Search Result no. </b><br>")
+        f.write(html_searchresultinfo)
+
+        if filesystemtype == "NTFS":
+            f.write(html_StdInfoAtt_NTFS)
+        
+        f.write(html_DirectoryEntryTimes)
 
         # HTML Closing
         f.write(html_closing)
@@ -196,7 +257,6 @@ def generate_report(data):
 
 
 
-
-
-
     pass
+
+generate_report(1)
