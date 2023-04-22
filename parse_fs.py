@@ -129,8 +129,9 @@ def fat_parse(fat):
     # PERSON 2
     pass
 
+'''
 fat16 = FAT16("./fat.dd")
 ntfs = NTFS("./ntfs.dd")
 print(fat16)
 print(ntfs)
-
+'''
