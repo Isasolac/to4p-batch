@@ -122,8 +122,19 @@ def main():
         
 
         # Print out filesystem report
+        # Create filesystem object here and add it to the data
         for key in fs_data:
             data = fs_data[key]
+
+            # Create the fs object
+            if data["Type"] == "NTFS":
+                data["FS_Object"] = parse_fs.NTFS(data["Name"])
+            elif data["Type"] == "FAT16":
+                data["FS_Object"] = parse_fs.FAT16(data["Name"])
+            elif data["Type"] == "FAT32":
+                data["FS_Object"] = parse_fs.FAT32(data["Name"])
+            else:
+                print("FS Type Unknown for key "+key)
 
             if data["Partition"]:
                 print("Slot "+key+" is a partition,")
@@ -133,6 +144,7 @@ def main():
         image_id += 1
     
     # TODO: Add calls to lines that parse the filesystem data
+
 
     if args.wordlist:
         # TODO: Add calls to lines that parse the wordlist
