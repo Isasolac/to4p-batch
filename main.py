@@ -126,17 +126,18 @@ def main():
         for key in fs_data:
             data = fs_data[key]
 
-            # Create the fs object
-            if data["Type"] == "NTFS":
-                data["FS_Object"] = parse_fs.NTFS(data["Name"])
-            elif data["Type"] == "FAT16":
-                data["FS_Object"] = parse_fs.FAT16(data["Name"])
-            elif data["Type"] == "FAT32":
-                data["FS_Object"] = parse_fs.FAT32(data["Name"])
-            else:
-                print("FS Type Unknown for key "+key)
 
             if data["Partition"]:
+                # Create the fs object
+                if data["Type"] == "NTFS":
+                    data["FS_Object"] = parse_fs.NTFS(data["Name"])
+                elif data["Type"] == "FAT16":
+                    data["FS_Object"] = parse_fs.FAT16(data["Name"])
+                elif data["Type"] == "FAT32":
+                    data["FS_Object"] = parse_fs.FAT32(data["Name"])
+                else:
+                    print("FS Type Unknown for key "+key)
+                
                 print("Slot "+key+" is a partition,")
                 print("File system type: "+data["Type"])
                 print("Carved name = "+data["Name"])
