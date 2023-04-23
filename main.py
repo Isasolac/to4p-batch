@@ -19,6 +19,8 @@ def main():
                         type=str)
     parser.add_argument('-w', '--wordlist', metavar='wordlist.txt',
                         type=str, required=False)
+    parser.add_argument('-s', '--hashlist', metavar='hashlist.txt',
+                        type=str, required=False)
     args = parser.parse_args()
 
     # Collects the dictionary information about each image
