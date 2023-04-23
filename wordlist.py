@@ -57,7 +57,7 @@ def wordlist_search_image(wordlist: list, image: str, image_data_tuple: tuple,
             print("Checking through paritions for matching sector")
         # use sector offset to find partition based on the filesystems in the image
         for fs_key, part in fs_data.items():
-            if part["Start"] <= match_sector <= part["End"]:
+            if int(part["Start"]) <= match_sector <= int(part["End"]):
                 if verbose:
                     print("Found sector %d in %s (between %d and %d)" % 
                           (match_sector, part["Name"], part["Start"], 

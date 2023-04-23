@@ -3,7 +3,7 @@ import datetime
 import parse_fs as fs
 
 def handle_fs_data(filesystem: fs.FileSystem):
-    filesystem_info = "Not Analysed"
+    filesystem_info = "Not Analysed<br><br>"
     metadata_info = ""
     content_info = ""
 
@@ -77,33 +77,7 @@ def write_hash_data(f, hash_data):
     f.write("</table></p>")
 
 
-def generate_report(volume_data, fs_data: dict, wordlist_data = None, hash_data = None):
-    # TODO: what form should our data be stored in?
-    # TODO: how can we generate a report?
-
-    # PERSON 4
-    
-#output_html_path=os.getcwd()+"//"+"out.html"
-    fs_data = {}
-    fs_data["8"] = {
-        "Partition": True,
-        "Slot": "10",
-        "Start" : "42",
-        "End": "862",
-        "Size": "12736",
-        "Description": "Hello there",
-        "Object": fs.NTFS("./ntfs.dd") 
-    }
-
-    fs_data["12"] = {
-        "Partition": True,
-        "Slot": "11",
-        "Start" : "43",
-        "End": "86234",
-        "Size": "12236",
-        "Description": "General Kenobi",
-        "Object": fs.FAT16("./fat.dd") 
-    }
+def generate_report(volume_data, fs_data: dict, wordlist_data = None):
     
     # Get current date and time
     now = datetime.datetime.now()
@@ -234,16 +208,14 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None, hash_data 
             f.write(filesystem_info)
             f.write(metadata_info)
             f.write(content_info)
+            if data["HashList"] is not None:
+                write_hash_data(f, data["HashList"])
 
         # Searching Section
         f.write(html_separatesection)
         if wordlist_data is not None:
             write_wordlist_data(f, wordlist_data, fs_data)
 
-        f.write(html_separatesection)
-        if hash_data is not None:
-            write_hash_data(f, hash_data)
-        
         # HTML Closing
         f.write(html_closing)
 
@@ -321,4 +293,4 @@ def write_wordlist_data(f, wordlist_data, fs_data):
                 """
                 f.write(html_DirectoryEntryTimes)
             SearchResult_number += 1
-generate_report(None, None)
+

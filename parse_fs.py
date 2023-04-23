@@ -49,7 +49,7 @@ class NTFS(FileSystem):
             if line.startswith(CLUSTER_SIZE_PREFIX):
                 self.cluster_size = int(line[len(CLUSTER_SIZE_PREFIX):])
             if line.startswith(VOLUME_SERIAL_NUMBER_PREFIX):
-                self.volume_serial_number = int(line[len(VOLUME_SERIAL_NUMBER_PREFIX):], 16)
+                self.volume_serial_number = line[len(VOLUME_SERIAL_NUMBER_PREFIX):]
             if line.startswith(FIRST_CLUSTER_OF_MFT_PREFIX):
                 self.first_cluster_of_mft = int(line[len(FIRST_CLUSTER_OF_MFT_PREFIX):])
             if line.startswith(FIRST_CLUSTER_OF_MFT_MIRROR_PREFIX):
@@ -81,7 +81,7 @@ class FAT16(FileSystem):
             if line.startswith(CLUSTER_SIZE_PREFIX):
                 self.cluster_size = int(line[len(CLUSTER_SIZE_PREFIX):])
             if line.startswith(VOLUME_ID_PREFIX):
-                self.volume_id = int(line[len(VOLUME_ID_PREFIX):], 16)
+                self.volume_id = line[len(VOLUME_ID_PREFIX):]
             if line.startswith(SECTORS_BEFORE_FILE_SYSTEM_PREFIX):
                 self.sectors_before_file_system = int(line[len(SECTORS_BEFORE_FILE_SYSTEM_PREFIX):])
             if line.startswith(TOTAL_RANGE_PREFIX):
@@ -110,11 +110,27 @@ class FAT32(FileSystem):
             if line.startswith(CLUSTER_SIZE_PREFIX):
                 self.cluster_size = int(line[len(CLUSTER_SIZE_PREFIX):])
             if line.startswith(VOLUME_ID_PREFIX):
-                self.volume_id = int(line[len(VOLUME_ID_PREFIX):], 16)
+                self.volume_id = line[len(VOLUME_ID_PREFIX):]
             if line.startswith(SECTORS_BEFORE_FILE_SYSTEM_PREFIX):
                 self.sectors_before_file_system = int(line[len(SECTORS_BEFORE_FILE_SYSTEM_PREFIX):])
             if line.startswith(TOTAL_RANGE_PREFIX):
                 self.total_range =line[len(TOTAL_RANGE_PREFIX):]
+
+
+class Unsupported(FileSystem):
+    def __init__(self, dd_image_path):
+        super().__init__(dd_image_path)
+        self.type = SupportedTypes.UNSUPPORTED
+    
+    def is_valid(self):
+        if self.type != SupportedTypes.UNSUPPORTED:
+            raise TypeError("Incorrect type provided")
+    
+    def parse(self, fsstat_output):
+        raise Exception("Method not implemented!")
+    
+
+
 
 
 def ntfs_parse(ntfs):
