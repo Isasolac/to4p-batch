@@ -90,8 +90,8 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None):
 
     # Image Variable
     image_file_name = volume_data["Name"]
-    MD5_result = "MD5resulthere"
-    SHA1_result = "SHA1resulthere"
+    MD5_result = volume_data["MD5"]
+    SHA1_result = volume_data["SHA1"]
 
     # Define HTML Output file name
     htmloutputfile = image_file_name + ".html"
@@ -143,12 +143,6 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None):
                 </tr></b>
     """
 
-    html_partitioninfo = f"""
-        <p><b>Hash Result</b><br>
-        MD5: {MD5_result}<br>
-        SHA-1: {SHA1_result}</p>
-    """
-
     html_separatesection = f"""
         <b>---------------------------------------------------------------------------------------</b>
     """
@@ -168,20 +162,6 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None):
 
         # Disk Image Information (Adding loop later)
         f.write(html_diskinfo)
-        f.write("<p><b>List Partition Information</b><br>")
-        f.write(html_partitiontableheader)
-
-        f.write("<tr>\n")
-        for item in partition1:
-            f.write("<td>" + str(item) + "</td>\n")
-        f.write("</tr>\n")
-
-        f.write("<tr>\n")
-        for item in partition2:
-            f.write("<td>" + str(item) + "</td>\n")
-        f.write("</tr>\n")
-
-        f.write("</table></p>")
 
         # Partition Information (Adding loop later)
         for partition_id in fs_data:
@@ -202,8 +182,11 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None):
             f.write("</tr>\n")
 
             f.write("</table></p>")
-            # FIXME: Add hash data
-            f.write(html_partitioninfo)
+            f.write(f"""
+                <p><b>Hash Result</b><br>
+                MD5: {data["MD5"]}<br>
+                SHA-1: {data["SHA1"]}</p>
+            """)
             filesystem_info, metadata_info, content_info = handle_fs_data(data["Object"])
             f.write(filesystem_info)
             f.write(metadata_info)
