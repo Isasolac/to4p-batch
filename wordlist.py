@@ -1,6 +1,7 @@
 import subprocess
 import re
 import fs_util
+import parse_fs
 
 def wordlist_search_image(wordlist: list, image: str, image_data_tuple: tuple, 
                           exclude_list: list = [], 
@@ -104,6 +105,8 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
         "Found_Files": dict: A mapping of the matching strings from the word 
             list to their associated files and inodes
     """
+    if type(fs_data["Object"]) == parse_fs.Unsupported:
+        return {"Occurrences": {word: 0 for word in wordlist}, "Found_Files": {}}
     if verbose:
         print("Finding matching strings in filesystem %s:" % filesystem)
     matches_str = get_matches(wordlist, filesystem, exclude_list, verbose)
@@ -118,7 +121,7 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
     #     raise
     if verbose:
         print("Searching through matches to find associated files:")
-    for match in matches_str.split("\n"):
+    for i, match in enumerate(matches_str.split("\n")):
         if re.search("[0-9]+", match) is None:
             continue
         match_cluster = fs_util.get_sector_or_cluster(match, fs_data["Object"].cluster_size)
@@ -158,10 +161,10 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
                 istatcmd = "istat -f %s %s %s" % (fs_type, filesystem, match_inode)
                 print("Collecting file metadata (%s)" % istatcmd)
             # found_files[match] = match_filepath + " (Inode: " + str(match_inode) + ")"
-            match_info["Filepath"] = match_filepath
-            match_info["Filename"] = match_filepath.split("/")[-1]
+            match_info["Filepath"] = match_filepath.decode()
+            match_info["Filename"] = match_filepath.decode().split("/")[-1]
             match_info["Metadata"] = fs_util.parse_istat_metadata(fs_type, filesystem, match_inode)
-        found_files[", ".join([i for i in wordlist if i in match])] = match_info
+        found_files["Match " + str(i+1) + ": " + ", ".join([i for i in wordlist if i.lower() in match.lower()])] = match_info
     return {"Occurrences": occurrences, "Found_Files": found_files}
 
 

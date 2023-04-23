@@ -144,15 +144,19 @@ def main():
             if data["Partition"]:
                 # Create the fs object
                 data["HashList"] = None
+                data["WordList"] = None
                 if data["Type"] == "NTFS":
                     data["Object"] = parse_fs.NTFS(data["Name"])
                     data["HashList"] = None if not args.hashlist else parse_hashlist(args.hashlist,data["Name"])
+                    data["WordList"] = None if not args.wordlist else wordlist.wordlist_search_filesystem(words, data["Name"], data)
                 elif data["Type"] == "FAT16":
                     data["Object"] = parse_fs.FAT16(data["Name"])
                     data["HashList"] = None if not args.hashlist else parse_hashlist(args.hashlist,data["Name"])
+                    data["WordList"] = None if not args.wordlist else wordlist.wordlist_search_filesystem(words, data["Name"], data)
                 elif data["Type"] == "FAT32":
                     data["Object"] = parse_fs.FAT32(data["Name"])
                     data["HashList"] = None if not args.hashlist else parse_hashlist(args.hashlist,data["Name"])
+                    data["WordList"] = None if not args.wordlist else wordlist.wordlist_search_filesystem(words, data["Name"], data)
                 else:
                     data["Object"] = parse_fs.Unsupported(data["Name"])
                     print("FS Type Unknown for key "+key)
@@ -165,8 +169,8 @@ def main():
     
     for data in image_data_list:
         # volume_data, fs_data
-        wordlist_data = None if not args.wordlist else wordlist.wordlist_search_image(words,data[0]["Name"],data)
-        report.generate_report(data[0], data[1], wordlist_data=wordlist_data)
+        # wordlist_data = None if not args.wordlist else wordlist.wordlist_search_image(words,data[0]["Name"],data)
+        report.generate_report(data[0], data[1])
 
 '''
 count: the number ID of the resulting carved filesystem ex "1_1"
