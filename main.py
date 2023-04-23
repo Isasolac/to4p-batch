@@ -37,7 +37,6 @@ def main():
     image_id = 0
 
     for image in args.images:
-        image_name_list.append(image)
 
         image_dir_name = "image"+"_"+str(image_id)
 
@@ -48,7 +47,7 @@ def main():
         output = stream.read()
         #print(output)
 
-        volume_data = {"Volume": "", "Sector_Size": -1}
+        volume_data = {"Volume": "", "Sector_Size": -1, "Name": image, "Offset_Sector": -1}
         fs_data = dict()
         fs_data_start = False
 
@@ -111,6 +110,12 @@ def main():
                 print("Volume is: "+volume)
                 volume_data["Volume"] = volume
 
+            elif "Offset Sector" in line:
+                tokens = line.split()
+
+                offset_sec = int(tokens[2])
+                volume_data["Offset_Sector"] = offset_sec
+
             elif "Units" in line:
                 tokens = line.split()
 
@@ -159,15 +164,17 @@ def main():
 
     if args.wordlist:
         # Add calls to lines that parse the wordlist
-        if (len(image_data_list)!= len(image_name_list)):
-            print("ERROR-not all images have data")
         
-        for i in range(len(image_data_list)):
-            wordlist.wordlist_search_image(words,image_name_list[i],image_data_list[i])
+        for data in image_data_list:
+            # data[0]["Name"] == volume_data
+            wordlist.wordlist_search_image(words,data[0]["Name"],data)
         
     
+    if not args.wordlist and not args.hashlist:
+        for data in image_data_list:
 
-    # TODO: Generate the report
+            # volume_data, fs_data
+            report.generate_report(data[0], data[1])
 
 '''
 count: the number ID of the resulting carved filesystem ex "1_1"
@@ -244,13 +251,9 @@ def parse_hashlist(hashlist_file, fs_name):
 
             # Use word to search filesystem
             for file in file_list:
-                #print(file)
-                if  (file["md5"] == hashsum):
-                    matches.append({"Type": "md5", "Name": file["filename"], "Inode": file["inode"]})
-                elif (file["sha1"] == hashsum):
-                    matches.append({"Type": "sha1", "Name": file["filename"], "Inode": file["inode"]})
-
-
+                if  (file["md5"] == hashsum) or (file["sha1"] == hashsum):
+                    file["matching_hash"] = "md5" if (file["md5"] == hashsum) else "sha1"
+                    matches.append(file)
 
     return matches
 
