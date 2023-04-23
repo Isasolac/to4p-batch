@@ -210,12 +210,12 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None, hash_data 
         # Searching Section
         f.write(html_separatesection)
         if wordlist_data is not None:
-            write_wordlist_data(f, wordlist_data, filesystemtype)
+            write_wordlist_data(f, wordlist_data, fs_data)
 
         # HTML Closing
         f.write(html_closing)
 
-def write_wordlist_data(f, wordlist_data, filesystemtype):
+def write_wordlist_data(f, wordlist_data, fs_data):
     FILE_NAME_TIME_MISMATCH = "Doesn't match FILE_NAME time:"
     SearchResult_number = 1
     for part_id, part_data in wordlist_data.items():
@@ -223,6 +223,7 @@ def write_wordlist_data(f, wordlist_data, filesystemtype):
             continue
         elif part_id == "Relevant_Partitions":
             continue
+        fs_type = fs_data[part_id]["Object"].type
         for match, match_info in part_data["Found_Files"].items():
             # Content search
             searchwordlist = match
@@ -253,7 +254,7 @@ def write_wordlist_data(f, wordlist_data, filesystemtype):
             f.write(html_searchresultinfo)
 
             # TODO: double check these fs type values
-            if filesystemtype == "NTFS":
+            if fs_type == fs.SupportedTypes.NTFS:
                 FileNameTime_Created = match_info["Metadata"]["File_Name_Times"][0]
                 FileNameTime_FileModified = match_info["Metadata"]["File_Name_Times"][1]
                 FileNameTime_MFTModified = match_info["Metadata"]["File_Name_Times"][2]
@@ -274,7 +275,7 @@ def write_wordlist_data(f, wordlist_data, filesystemtype):
                         Mismatching times may indicate anti-forensic tampering.</p>
                 """
                 f.write(html_StdInfoAtt_NTFS)
-            elif filesystemtype == "FAT":
+            elif fs_type == fs.SupportedTypes.FAT16 or fs_type == fs.SupportedTypes.FAT32:
                 # Directory Entry Times for FAT
                 DirInfoLine1_Written = match_info["Metadata"]["Times"][0]
                 DirInfoLine2_Accessed = match_info["Metadata"]["Times"][1]
