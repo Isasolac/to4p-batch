@@ -251,13 +251,9 @@ def parse_hashlist(hashlist_file, fs_name):
 
             # Use word to search filesystem
             for file in file_list:
-                #print(file)
-                if  (file["md5"] == hashsum):
-                    matches.append({"Type": "md5", "Name": file["filename"], "Inode": file["inode"]})
-                elif (file["sha1"] == hashsum):
-                    matches.append({"Type": "sha1", "Name": file["filename"], "Inode": file["inode"]})
-
-
+                if  (file["md5"] == hashsum) or (file["sha1"] == hashsum):
+                    file["matching_hash"] = "md5" if (file["md5"] == hashsum) else "sha1"
+                    matches.append(file)
 
     return matches
 

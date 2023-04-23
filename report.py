@@ -47,6 +47,34 @@ def handle_fs_data(filesystem: fs.FileSystem):
         """
     return filesystem_info, metadata_info, content_info
 
+def write_hash_data(f, hash_data):
+    f.write(f"<p><b>Hash Search Result</b><br>")
+    f.write(f"""
+            <table border="1">
+                <tr><b>
+                    <th>Inode</th>
+                    <th>File</th>
+                    <th>Type</th>
+                    <th>Last Access Time</th>
+                    <th>MD5 Hash</th>
+                    <th>SHA1 Hash</th>
+                </tr></b>
+    """)
+    for entry in hash_data:
+        f.write("<tr>\n")
+        f.write("<td>" + entry['inode'] + "</td>\n")
+        f.write("<td>" + entry["filename"] + "</td>\n")
+        f.write("<td>" + entry["type"] + "</td>\n")
+        f.write("<td>" + entry["atime"] + "</td>\n")
+        if entry["matching_hash"] == "md5":
+            f.write("<td><b>" + entry["md5"] + "</b></td>\n")
+            f.write("<td>" + entry["sha1"] + "</td>\n")
+        else:
+            f.write("<td>" + entry["md5"] + "</td>\n")
+            f.write("<td><b>" + entry["sha1"] + "</b></td>\n")
+        f.write("</tr>\n")
+
+    f.write("</table></p>")
 
 
 def generate_report(volume_data, fs_data: dict, wordlist_data = None, hash_data = None):
@@ -212,6 +240,10 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None, hash_data 
         if wordlist_data is not None:
             write_wordlist_data(f, wordlist_data, fs_data)
 
+        f.write(html_separatesection)
+        if hash_data is not None:
+            write_hash_data(f, hash_data)
+        
         # HTML Closing
         f.write(html_closing)
 
@@ -289,4 +321,4 @@ def write_wordlist_data(f, wordlist_data, fs_data):
                 """
                 f.write(html_DirectoryEntryTimes)
             SearchResult_number += 1
-generate_report(1)
+generate_report(None, None)
