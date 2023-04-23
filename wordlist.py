@@ -44,7 +44,7 @@ def wordlist_search_image(wordlist: list, image: str, image_data_tuple: tuple,
     if verbose:
         print("Searching through matches for relevant partitions:")
     for match in matches_str.split("\n"):
-        if match == "":
+        if re.search("[0-9]+", match) is None:
             continue
         # get sector offset
         match_sector = fs_util.get_sector_or_cluster(
@@ -119,7 +119,7 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
     if verbose:
         print("Searching through matches to find associated files:")
     for match in matches_str.split("\n"):
-        if match == "":
+        if re.search("[0-9]+", match) is None:
             continue
         match_cluster = fs_util.get_sector_or_cluster(match, fs_data["Object"].cluster_size)
         if verbose:
@@ -132,6 +132,7 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
             print("Find the inode for cluster %d (%s)" % 
                   (match_cluster, ifindcmd))
         match_info = {}
+        match_info["Match_Line"] = match
         match_info["Cluster"] = match_cluster
         match_info["Inode"] = match_inode
         if match_inode.startswith("Inode not found"):
@@ -160,7 +161,7 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
             match_info["Filepath"] = match_filepath
             match_info["Filename"] = match_filepath.split("/")[-1]
             match_info["Metadata"] = fs_util.parse_istat_metadata(fs_type, filesystem, match_inode)
-        found_files[match] = match_info
+        found_files[", ".join([i for i in wordlist if i in match])] = match_info
     return {"Occurrences": occurrences, "Found_Files": found_files}
 
 
