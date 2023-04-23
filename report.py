@@ -1,14 +1,82 @@
 import os
 import datetime
+import parse_fs as fs
 
-def generate_report(data):
+def handle_fs_data(filesystem: fs.FileSystem):
+    filesystem_info = "Not Analysed"
+    metadata_info = ""
+    content_info = ""
+
+    if filesystem.type == fs.SupportedTypes.NTFS:
+        type = "NTFS"
+        filesystem_info = f"""
+            <p><b>File System Information</b><br>
+                File System Type: {type}<br>
+                Volume Serial Number: {filesystem.volume_serial_number}</p>
+        """    
+        metadata_info = f"""
+            <p><b>Metadata Information</b><br>
+                First Cluster of MFT: {filesystem.first_cluster_of_mft}<br>
+                First Cluster of MFT Mirror: {filesystem.first_cluster_of_mft_mirror}<br>
+                Size of MFT Entries: {filesystem.size_of_mft_entries}</p>
+        """
+        content_info = f"""
+            <p><b>Content Information</b><br>
+                Sector Size: {filesystem.sector_size}<br>
+                Cluster Size: {filesystem.cluster_size}</p>
+        """
+    elif filesystem.type == fs.SupportedTypes.FAT16 or filesystem.type == fs.SupportedTypes.FAT32:
+        type = "FAT16" if filesystem.type == fs.SupportedTypes.FAT16 else "FAT32"
+        
+        filesystem_info = f"""
+            <p><b>File System Information</b><br>
+                File System Type: {type}<br>
+                Volume ID: {filesystem.volume_id}</p>
+        """
+
+        metadata_info = f"""
+            <p><b>Metadata Information</b><br>
+                Sectors before file system: {filesystem.sectors_before_file_system}<br>
+                Total Range: {filesystem.total_range}</p>
+        """
+
+        content_info = f"""
+            <p><b>Content Information</b><br>
+                Sector Size: {filesystem.sector_size}<br>
+                Cluster Size: {filesystem.cluster_size}</p>
+        """
+    return filesystem_info, metadata_info, content_info
+
+
+
+def generate_report(fs_data: dict):
     # TODO: what form should our data be stored in?
     # TODO: how can we generate a report?
 
     # PERSON 4
     
 #output_html_path=os.getcwd()+"//"+"out.html"
+    fs_data = {}
+    fs_data["8"] = {
+        "Partition": True,
+        "Slot": "10",
+        "Start" : "42",
+        "End": "862",
+        "Size": "12736",
+        "Description": "Hello there",
+        "Object": fs.NTFS("./ntfs.dd") 
+    }
 
+    fs_data["12"] = {
+        "Partition": True,
+        "Slot": "11",
+        "Start" : "43",
+        "End": "86234",
+        "Size": "12236",
+        "Description": "General Kenobi",
+        "Object": fs.FAT16("./fat.dd") 
+    }
+    
     # Get current date and time
     now = datetime.datetime.now()
     current_date = now.strftime("%B %d, %Y")
@@ -33,25 +101,6 @@ def generate_report(data):
 
     partition1 = ["11", "12", "13", "14", "15", "16"]
     partition2 = ["21", "22", "23", "24", "25", "26"]
-
-    filesystemtype = "NTFS" # FAT or NTFS
-
-    # File System Information Variable
-    FSInfoLine1_FileSystemType = filesystemtype
-    FSInfoLine2_VolumeSerialNumber = "VolumeSerialNumberHere"
-
-    # Metadata Information Variable for NTFS
-    MetadataInfoLine1_NTFS_FirstClusterofMFT = "16"
-    MetadataInfoLine2_NTFS_FirstClusterofMFTMirror = "32759"
-    MetadataInfoLine3_NTFS_SizeofMFTEntries = "1024"
-
-    # Metadata Information Variable for FAT
-    MetadataInfoLine1_FAT_SectorBeforeFileSystem = "128"
-    MetadataInfoLine2_FAT_TotalRange = "0 - 204799"
-
-    # Content Information Variable
-    ContentInfoLine1_SectorSize = "512"
-    ContentInfoLine2_Clustersize = "1024"
 
     # Content search
     searchwordlist = "wordlist here"
@@ -121,43 +170,6 @@ def generate_report(data):
         <b>---------------------------------------------------------------------------------------</b>
     """
 
-    html_filesysteminfo_NTFS = f"""
-        <p><b>File System Information</b><br>
-            File System Type: {FSInfoLine1_FileSystemType}<br>
-            Volume Serial Number: {FSInfoLine2_VolumeSerialNumber}</p>
-    """
-
-    html_metadatainto_NTFS = f"""
-        <p><b>Metadata Information</b><br>
-            First Cluster of MFT: {MetadataInfoLine1_NTFS_FirstClusterofMFT}<br>
-            First Cluster of MFT Mirror: {MetadataInfoLine2_NTFS_FirstClusterofMFTMirror}<br>
-            Size of MFT Entries: {MetadataInfoLine3_NTFS_SizeofMFTEntries} bytes</p>
-    """
-
-    html_contentinto_NTFS = f"""
-        <p><b>Content Information</b><br>
-            Sector Size: {ContentInfoLine1_SectorSize}<br>
-            Cluster Size: {ContentInfoLine2_Clustersize}</p>
-    """
-
-    html_filesysteminfo_FAT = f"""
-        <p><b>File System Information</b><br>
-            File System Type: {FSInfoLine1_FileSystemType}<br>
-            Volume ID: {FSInfoLine2_VolumeSerialNumber}</p>
-    """
-
-    html_metadatainto_FAT = f"""
-        <p><b>Metadata Information</b><br>
-            Sectors before file system: {MetadataInfoLine1_FAT_SectorBeforeFileSystem}<br>
-            Total Range: {MetadataInfoLine2_FAT_TotalRange}</p>
-    """
-
-    html_contentinto_FAT = f"""
-        <p><b>Content Information</b><br>
-            Sector Size: {ContentInfoLine1_SectorSize}<br>
-            Cluster Size: {ContentInfoLine2_Clustersize}</p>
-    """
-
     html_searchresult = f"""
         <p><b>Wordlist Search Result</b><br><br>
             Search for: {searchwordlist}<br>
@@ -215,29 +227,30 @@ def generate_report(data):
         f.write("</table></p>")
 
         # Partition Information (Adding loop later)
-        f.write(html_separatesection)
-        f.write("<p><b>## Partition ID:</b><br>")
-        f.write(html_partitiontableheader)
+        for partition_id in fs_data:
+            data = fs_data[partition_id]
+            if not data["Partition"]:
+                continue
 
-        f.write("<tr>\n")
-        for item in partition1:
-            f.write("<td>" + str(item) + "</td>\n")
-        f.write("</tr>\n")
+            f.write(html_separatesection)
+            f.write(f"<p><b>## Partition {partition_id}: </b><br>")
+            f.write(html_partitiontableheader)
+            f.write("<tr>\n")
+            f.write("<td>" + partition_id + "</td>\n")
+            f.write("<td>" + data["Slot"] + "</td>\n")
+            f.write("<td>" + data["Start"] + "</td>\n")
+            f.write("<td>" + data["End"] + "</td>\n")
+            f.write("<td>" + data["Size"] + "</td>\n")
+            f.write("<td>" + data["Description"] + "</td>\n")
+            f.write("</tr>\n")
 
-        f.write("</table></p>")
-
-        f.write(html_partitioninfo)
-
-        if filesystemtype == "NTFS":
-            f.write(html_filesysteminfo_NTFS)
-            f.write(html_metadatainto_NTFS)
-            f.write(html_contentinto_NTFS)
-        
-        elif filesystemtype == "FAT":
-            f.write(html_filesysteminfo_FAT)
-            f.write(html_metadatainto_FAT)
-            f.write(html_contentinto_FAT)
-        
+            f.write("</table></p>")
+            # FIXME: Add hash data
+            f.write(html_partitioninfo)
+            filesystem_info, metadata_info, content_info = handle_fs_data(data["Object"])
+            f.write(filesystem_info)
+            f.write(metadata_info)
+            f.write(content_info)
 
         # Searching Section
         f.write(html_separatesection)
@@ -246,9 +259,9 @@ def generate_report(data):
         # Search result (Adding loop later)
         f.write("<p><b>## Search Result no. </b><br>")
         f.write(html_searchresultinfo)
-
-        if filesystemtype == "NTFS":
-            f.write(html_StdInfoAtt_NTFS)
+        # FIXME: Somehow handle this?
+        # if filesystemtype == "NTFS":
+            # f.write(html_StdInfoAtt_NTFS)
         
         f.write(html_DirectoryEntryTimes)
 
