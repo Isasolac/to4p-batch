@@ -2,3 +2,4 @@
 __pycache__
 *.html
 .DS_Store
+*.xml
