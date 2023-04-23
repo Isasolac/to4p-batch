@@ -4,6 +4,7 @@ import parse_fs
 import wordlist
 import report
 import tsk_utils
+import shutil
 
 '''
     Command line input: python ./main.py image1.dd image2.dd [...]
@@ -39,7 +40,9 @@ def main():
     for image in args.images:
 
         image_dir_name = "image"+"_"+str(image_id)
-
+        if os.path.exists(image_dir_name):
+            shutil.rmtree(image_dir_name)
+        
         stream = os.popen('mkdir '+image_dir_name)
 
         # Step 1: use mmls to find filesystems
@@ -140,41 +143,30 @@ def main():
             # associated with this partition ID
             if data["Partition"]:
                 # Create the fs object
+                data["HashList"] = None
                 if data["Type"] == "NTFS":
                     data["Object"] = parse_fs.NTFS(data["Name"])
+                    data["HashList"] = None if not args.hashlist else parse_hashlist(args.hashlist,data["Name"])
                 elif data["Type"] == "FAT16":
                     data["Object"] = parse_fs.FAT16(data["Name"])
+                    data["HashList"] = None if not args.hashlist else parse_hashlist(args.hashlist,data["Name"])
                 elif data["Type"] == "FAT32":
                     data["Object"] = parse_fs.FAT32(data["Name"])
+                    data["HashList"] = None if not args.hashlist else parse_hashlist(args.hashlist,data["Name"])
                 else:
+                    data["Object"] = parse_fs.Unsupported(data["Name"])
                     print("FS Type Unknown for key "+key)
                 
                 print("Slot "+key+" is a partition,")
                 print("File system type: "+data["Type"])
                 print("Carved name = "+data["Name"])
-
-                # Call parse_hashlist
-                if args.hashlist:
-                    parse_hashlist(args.hashlist,data["Name"])
                     
         image_id += 1
-
     
-
-
-    if args.wordlist:
-        # Add calls to lines that parse the wordlist
-        
-        for data in image_data_list:
-            # data[0]["Name"] == volume_data
-            wordlist.wordlist_search_image(words,data[0]["Name"],data)
-        
-    
-    if not args.wordlist and not args.hashlist:
-        for data in image_data_list:
-
-            # volume_data, fs_data
-            report.generate_report(data[0], data[1])
+    for data in image_data_list:
+        # volume_data, fs_data
+        wordlist_data = None if not args.wordlist else wordlist.wordlist_search_image(words,data[0]["Name"],data)
+        report.generate_report(data[0], data[1], wordlist_data=wordlist_data)
 
 '''
 count: the number ID of the resulting carved filesystem ex "1_1"
