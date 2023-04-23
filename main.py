@@ -131,7 +131,8 @@ def main():
         for key in fs_data:
             data = fs_data[key]
 
-
+            # if data["Partition"] is true, then there is a filesystem 
+            # associated with this partition ID
             if data["Partition"]:
                 # Create the fs object
                 if data["Type"] == "NTFS":
@@ -232,18 +233,25 @@ def parse_wordlist(wordlist_file):
     return words
 
 def parse_hashlist(hashlist_file, fs_name):
-    words = []
+    matches = []
 
-    hash_info_dict = tsk_utils.fiwalk(fs_name)
+    file_list = tsk_utils.fiwalk(fs_name)
 
     with open(hashlist_file, 'r') as file:
         
-        for word in file.readlines():
-            word = word.strip('\n')
+        for hashsum in file.readlines():
+            hashsum = hashsum.strip('\n')
 
             # Use word to search filesystem
+            for file in file_list:
+                if  (file["md5"] == hashsum):
+                    matches.append({"Type": "md5", "Name": file["filename"], "Inode": file["inode"]})
+                elif (file["sha1"] == hashsum):
+                    matches.append({"Type": "sha1", "Name": file["filename"], "Inode": file["inode"]})
 
-    return words
+
+
+    return matches
 
 if __name__ == '__main__':
     main()
