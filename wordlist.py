@@ -44,6 +44,8 @@ def wordlist_search_image(wordlist: list, image: str, image_data_tuple: tuple,
     if verbose:
         print("Searching through matches for relevant partitions:")
     for match in matches_str.split("\n"):
+        if match == "":
+            continue
         # get sector offset
         match_sector = fs_util.get_sector_or_cluster(
             match, volume_data["Sector_Size"])
@@ -117,6 +119,8 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
     if verbose:
         print("Searching through matches to find associated files:")
     for match in matches_str.split("\n"):
+        if match == "":
+            continue
         match_cluster = fs_util.get_sector_or_cluster(match, fs_data["Object"].cluster_size)
         if verbose:
             byte_offset = int(re.search("[0-9]+", match).group())

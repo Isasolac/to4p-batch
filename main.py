@@ -23,6 +23,7 @@ def main():
 
     # Collects the dictionary information about each image
     image_data_list = []
+    image_name_list = []
 
     if args.wordlist:
         words = parse_wordlist(args.wordlist)
@@ -32,7 +33,7 @@ def main():
     image_id = 0
 
     for image in args.images:
-        print(image)
+        image_name_list.append(image)
 
         image_dir_name = "image"+"_"+str(image_id)
 
@@ -130,27 +131,34 @@ def main():
             if data["Partition"]:
                 # Create the fs object
                 if data["Type"] == "NTFS":
-                    data["FS_Object"] = parse_fs.NTFS(data["Name"])
+                    data["Object"] = parse_fs.NTFS(data["Name"])
                 elif data["Type"] == "FAT16":
-                    data["FS_Object"] = parse_fs.FAT16(data["Name"])
+                    data["Object"] = parse_fs.FAT16(data["Name"])
                 elif data["Type"] == "FAT32":
-                    data["FS_Object"] = parse_fs.FAT32(data["Name"])
+                    data["Object"] = parse_fs.FAT32(data["Name"])
                 else:
                     print("FS Type Unknown for key "+key)
                 
                 print("Slot "+key+" is a partition,")
                 print("File system type: "+data["Type"])
                 print("Carved name = "+data["Name"])
+
+                if args.wordlist:
+                    wordlist.wordlist_search_filesystem(words, data["Name"], data)
         
         image_id += 1
+
     
-    # TODO: Add calls to lines that parse the filesystem data
 
 
     if args.wordlist:
-        # TODO: Add calls to lines that parse the wordlist
-        # The string list of words is called "words"
-        pass
+        # Add calls to lines that parse the wordlist
+        if (len(image_data_list)!= len(image_name_list)):
+            print("ERROR-not all images have data")
+        
+        for i in range(len(image_data_list)):
+            wordlist.wordlist_search_image(words,image_name_list[i],image_data_list[i])
+        
     
 
     # TODO: Generate the report
