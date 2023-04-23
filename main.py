@@ -47,7 +47,7 @@ def main():
         output = stream.read()
         #print(output)
 
-        volume_data = {"Volume": "", "Sector_Size": -1, "Name": image}
+        volume_data = {"Volume": "", "Sector_Size": -1, "Name": image, "Offset_Sector": -1}
         fs_data = dict()
         fs_data_start = False
 
@@ -109,6 +109,12 @@ def main():
                     volume="GPT"
                 print("Volume is: "+volume)
                 volume_data["Volume"] = volume
+
+            elif "Offset Sector" in line:
+                tokens = line.split()
+
+                offset_sec = int(tokens[2])
+                volume_data["Offset_Sector"] = offset_sec
 
             elif "Units" in line:
                 tokens = line.split()

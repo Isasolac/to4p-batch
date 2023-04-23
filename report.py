@@ -87,7 +87,7 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None, hash_data 
     team_name = "TeamOf4People (Ankshit Jain, Isabel Gardner, Matthew Woo, Thanyanun Charoensiritanasin)"
 
     # Image Variable
-    image_file_name = "image1.dd"
+    image_file_name = volume_data["Name"]
     MD5_result = "MD5resulthere"
     SHA1_result = "SHA1resulthere"
 
@@ -95,9 +95,9 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None, hash_data 
     htmloutputfile = image_file_name + ".html"
 
     # Disk Image Information Variable
-    DiskInfoLine1_DOSorGPT = "DOS Partition Table // GUID Partition Table (EFI)"
-    DiskInfoLine2_OffsetSector = "0"
-    DiskInfoLine3_BytePerSector = "512"
+    DiskInfoLine1_DOSorGPT = volume_data["Volume"]
+    DiskInfoLine2_OffsetSector = volume_data["Offset_Sector"]
+    DiskInfoLine3_BytePerSector = volume_data["Sector_Size"]
 
     partition1 = ["11", "12", "13", "14", "15", "16"]
     partition2 = ["21", "22", "23", "24", "25", "26"]
