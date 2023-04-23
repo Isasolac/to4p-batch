@@ -131,11 +131,11 @@ def main():
             if data["Partition"]:
                 # Create the fs object
                 if data["Type"] == "NTFS":
-                    data["FS_Object"] = parse_fs.NTFS(data["Name"])
+                    data["Object"] = parse_fs.NTFS(data["Name"])
                 elif data["Type"] == "FAT16":
-                    data["FS_Object"] = parse_fs.FAT16(data["Name"])
+                    data["Object"] = parse_fs.FAT16(data["Name"])
                 elif data["Type"] == "FAT32":
-                    data["FS_Object"] = parse_fs.FAT32(data["Name"])
+                    data["Object"] = parse_fs.FAT32(data["Name"])
                 else:
                     print("FS Type Unknown for key "+key)
                 
