@@ -3,6 +3,7 @@ import argparse # Could also look at getopt?
 import parse_fs
 import wordlist
 import report
+import tsk_utils
 
 '''
     Command line input: python ./main.py image1.dd image2.dd [...]
@@ -31,6 +32,7 @@ def main():
         words = parse_wordlist(args.wordlist)
 
         print(words)
+    
 
     image_id = 0
 
@@ -145,9 +147,10 @@ def main():
                 print("File system type: "+data["Type"])
                 print("Carved name = "+data["Name"])
 
-                if args.wordlist:
-                    wordlist.wordlist_search_filesystem(words, data["Name"], data)
-        
+                # Call parse_hashlist
+                if args.hashlist:
+                    parse_hashlist(args.hashlist,data["Name"])
+                    
         image_id += 1
 
     
@@ -228,6 +231,19 @@ def parse_wordlist(wordlist_file):
 
     return words
 
+def parse_hashlist(hashlist_file, fs_name):
+    words = []
+
+    hash_info_dict = tsk_utils.fiwalk(fs_name)
+
+    with open(hashlist_file, 'r') as file:
+        
+        for word in file.readlines():
+            word = word.strip('\n')
+
+            # Use word to search filesystem
+
+    return words
 
 if __name__ == '__main__':
     main()
