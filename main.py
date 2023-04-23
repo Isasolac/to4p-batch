@@ -3,6 +3,7 @@ import argparse # Could also look at getopt?
 import parse_fs
 import wordlist
 import report
+import tsk_utils
 
 '''
     Command line input: python ./main.py image1.dd image2.dd [...]
@@ -19,6 +20,8 @@ def main():
                         type=str)
     parser.add_argument('-w', '--wordlist', metavar='wordlist.txt',
                         type=str, required=False)
+    parser.add_argument('-s', '--hashlist', metavar='hashlist.txt',
+                        type=str, required=False)
     args = parser.parse_args()
 
     # Collects the dictionary information about each image
@@ -29,6 +32,7 @@ def main():
         words = parse_wordlist(args.wordlist)
 
         print(words)
+    
 
     image_id = 0
 
@@ -127,7 +131,8 @@ def main():
         for key in fs_data:
             data = fs_data[key]
 
-
+            # if data["Partition"] is true, then there is a filesystem 
+            # associated with this partition ID
             if data["Partition"]:
                 # Create the fs object
                 if data["Type"] == "NTFS":
@@ -143,9 +148,10 @@ def main():
                 print("File system type: "+data["Type"])
                 print("Carved name = "+data["Name"])
 
-                if args.wordlist:
-                    wordlist.wordlist_search_filesystem(words, data["Name"], data)
-        
+                # Call parse_hashlist
+                if args.hashlist:
+                    parse_hashlist(args.hashlist,data["Name"])
+                    
         image_id += 1
 
     
@@ -226,6 +232,27 @@ def parse_wordlist(wordlist_file):
 
     return words
 
+def parse_hashlist(hashlist_file, fs_name):
+    matches = []
+
+    file_list = tsk_utils.fiwalk(fs_name)
+
+    with open(hashlist_file, 'r') as file:
+        
+        for hashsum in file.readlines():
+            hashsum = hashsum.strip('\n')
+
+            # Use word to search filesystem
+            for file in file_list:
+                #print(file)
+                if  (file["md5"] == hashsum):
+                    matches.append({"Type": "md5", "Name": file["filename"], "Inode": file["inode"]})
+                elif (file["sha1"] == hashsum):
+                    matches.append({"Type": "sha1", "Name": file["filename"], "Inode": file["inode"]})
+
+
+
+    return matches
 
 if __name__ == '__main__':
     main()
