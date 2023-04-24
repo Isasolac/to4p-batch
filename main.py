@@ -54,7 +54,10 @@ def main():
         #print(output)
         md5, sha1 = hash(image)
 
-        volume_data = {"Volume": "", "Sector_Size": -1, "Name": image, "Offset_Sector": -1, "MD5": md5, "SHA1": sha1, "Partition_Num": 0}
+        volume_data = {"Volume": "", "Sector_Size": -1, 
+                       "Name": image, "Offset_Sector": -1, 
+                       "MD5": md5, "SHA1": sha1, 
+                       "Partition_Num": 0}
 
         fs_data = dict()
         fs_data_start = False
@@ -197,6 +200,7 @@ def main():
         for i in range(len(hash_file_list)-1):
             hash_files = hash_file_list[i]
             print(hash_files)
+            file_matches_dict[i] = []
 
             # Compare it to all the files in proceeding
             for j in range(i+1, len(hash_file_list)):
@@ -212,10 +216,9 @@ def main():
 
                     # If res is not empty, then a match has been found
                     if res != []:
-                        file_matches_dict[md5hash]= []
 
                         for resmatch in res:
-                            file_matches_dict[md5hash].append((i,resmatch))
+                            file_matches_dict[i].append((md5hash,file['filename'],resmatch))
         
         print(file_matches_dict)
         if file_matches_dict == {}:
@@ -228,10 +231,12 @@ def main():
         report.generate_report(data[0], data[1])
 
 '''
-count: the number ID of the resulting carved filesystem ex "1_1"
+Utility function
 '''
-def cat_slot(slot_num, image_name, count):
+
+def partition_id_to_image_name(part_id):
     pass
+
 
 '''
 Returns a dictionary with slot information
