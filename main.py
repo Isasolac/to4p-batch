@@ -5,6 +5,7 @@ import wordlist
 import report
 import tsk_utils
 import shutil
+import hashlib
 
 '''
     Command line input: python ./main.py image1.dd image2.dd [...]
@@ -49,8 +50,11 @@ def main():
         stream = os.popen('mmls ./'+image)
         output = stream.read()
         #print(output)
+        md5, sha1 = hash(image)
+        print(f"{image}: {md5}, {sha1}")
 
-        volume_data = {"Volume": "", "Sector_Size": -1, "Name": image, "Offset_Sector": -1}
+        volume_data = {"Volume": "", "Sector_Size": -1, "Name": image, "Offset_Sector": -1, "MD5": md5, "SHA1": sha1}
+
         fs_data = dict()
         fs_data_start = False
 
@@ -97,6 +101,11 @@ def main():
                     data["Type"] = fs_type
 
                     fs_data[fs_key] = data
+
+                    md5, sha1 = hash(name)
+                    print(f"{name}: {md5}, {sha1}")
+                    data["MD5"] = md5
+                    data["SHA1"] = sha1
 
                     # increment the fs_id so names don't overlap
                     fs_id = fs_id+1
@@ -253,5 +262,18 @@ def parse_hashlist(hashlist_file, fs_name):
 
     return matches
 
+def hash(file_path):
+    md5 = hashlib.md5()
+    sha1 = hashlib.sha1()
+
+    with open(file_path, 'rb') as f:
+        while True:
+            data = f.read(4096)
+            if not data:
+                break
+            md5.update(data)
+            sha1.update(data)
+    return md5.hexdigest(), sha1.hexdigest()
+ 
 if __name__ == '__main__':
     main()
