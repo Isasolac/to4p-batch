@@ -51,7 +51,6 @@ def main():
         output = stream.read()
         #print(output)
         md5, sha1 = hash(image)
-        print(f"{image}: {md5}, {sha1}")
 
         volume_data = {"Volume": "", "Sector_Size": -1, "Name": image, "Offset_Sector": -1, "MD5": md5, "SHA1": sha1}
 
@@ -103,7 +102,6 @@ def main():
                     fs_data[fs_key] = data
 
                     md5, sha1 = hash(name)
-                    print(f"{name}: {md5}, {sha1}")
                     data["MD5"] = md5
                     data["SHA1"] = sha1
 

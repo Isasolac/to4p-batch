@@ -48,6 +48,8 @@ def handle_fs_data(filesystem: fs.FileSystem):
     return filesystem_info, metadata_info, content_info
 
 def write_hash_data(f, hash_data):
+    if len(hash_data) == 0:
+        return
     f.write(f"<p><b>Hash Search Result</b><br>")
     f.write(f"""
             <table border="1">
