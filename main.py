@@ -177,9 +177,9 @@ def main():
                 if args.hashlist:
                     hash_files = parse_hashlist(args.hashlist,data["Name"])
 
-                    # Add to another arg
-                    if args.correlate:
-                        hash_file_list.append(hash_files)
+                # Add to another arg
+                if args.correlate:
+                    hash_file_list.append(tsk_utils.fiwalk(data["Name"]))
                     
         image_id += 1
     
