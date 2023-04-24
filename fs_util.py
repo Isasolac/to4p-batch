@@ -77,3 +77,7 @@ def get_filepath(fs_type: str, filesystem: str, inode: str):
     """
     _, stdout, _ = run_command("ffind -f %s %s %s" % (fs_type, filesystem, inode))
     return stdout.decode()
+
+def extract_file(fs_type: str, filesystem: str, inode: str, filepath: str):
+    run_command(
+        "icat -f %s -r %s %s > %s" % (fs_type, filesystem, inode.split("-")[0], filepath))

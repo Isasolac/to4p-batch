@@ -3,10 +3,8 @@ import argparse # Could also look at getopt?
 import parse_fs
 import wordlist
 import report
-import tsk_utils
 import shutil
-import hashlib
-from tsk_utils import run_command
+from tsk_utils import run_command, hash, fiwalk
 
 '''
     Command line input: python ./main.py image1.dd image2.dd [...]
@@ -24,6 +22,8 @@ def main():
     parser.add_argument('-w', '--wordlist', metavar='wordlist.txt',
                         type=str, required=False)
     parser.add_argument('-s', '--hashlist', metavar='hashlist.txt',
+                        type=str, required=False)
+    parser.add_argument('-o', '--output', metavar='output',
                         type=str, required=False)
     args = parser.parse_args()
 
@@ -44,8 +44,7 @@ def main():
         image_dir_name = "image"+"_"+str(image_id)
         if os.path.exists(image_dir_name):
             shutil.rmtree(image_dir_name)
-        
-        _, _, _ = run_command('mkdir '+image_dir_name)
+        os.makedirs(image_dir_name)
 
         # Step 1: use mmls to find filesystems
         _, output, _ = run_command('mmls ./'+image)
@@ -173,10 +172,15 @@ def main():
                     
         image_id += 1
     
+    if args.output is not None:
+        if os.path.exists(args.output):
+            shutil.rmtree(args.output)
+        os.makedirs(args.output)
+
     for data in image_data_list:
         # volume_data, fs_data
         # wordlist_data = None if not args.wordlist else wordlist.wordlist_search_image(words,data[0]["Name"],data)
-        report.generate_report(data[0], data[1])
+        report.generate_report(data[0], data[1], args.output)
 
 '''
 count: the number ID of the resulting carved filesystem ex "1_1"
@@ -243,7 +247,7 @@ def parse_wordlist(wordlist_file):
 def parse_hashlist(hashlist_file, fs_name):
     matches = []
 
-    file_list = tsk_utils.fiwalk(fs_name)
+    file_list = fiwalk(fs_name)
 
     with open(hashlist_file, 'r') as file:
         
@@ -257,19 +261,6 @@ def parse_hashlist(hashlist_file, fs_name):
                     matches.append(file)
 
     return matches
-
-def hash(file_path):
-    md5 = hashlib.md5()
-    sha1 = hashlib.sha1()
-
-    with open(file_path, 'rb') as f:
-        while True:
-            data = f.read(4096)
-            if not data:
-                break
-            md5.update(data)
-            sha1.update(data)
-    return md5.hexdigest(), sha1.hexdigest()
  
 if __name__ == '__main__':
     main()
