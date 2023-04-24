@@ -1,7 +1,8 @@
-import subprocess
 import re
 import fs_util
 import parse_fs
+from tsk_utils import run_command
+
 
 def wordlist_search_image(wordlist: list, image: str, image_data_tuple: tuple, 
                           exclude_list: list = [], 
@@ -129,7 +130,7 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
             byte_offset = int(re.search("[0-9]+", match).group())
             print("Match %s in cluster %d ( = %d / %d)" % 
                   (match, match_cluster, byte_offset, fs_data["Object"].cluster_size))
-        match_inode = fs_util.get_inode(fs_type, filesystem, match_cluster).decode()
+        match_inode = fs_util.get_inode(fs_type, filesystem, match_cluster)
         if verbose:
             ifindcmd = "ifind -f %s %s -d %d" % (fs_type, filesystem, match_cluster)
             print("Find the inode for cluster %d (%s)" % 
@@ -167,8 +168,8 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
                 istatcmd = "istat -f %s %s %s" % (fs_type, filesystem, match_inode)
                 print("Collecting file metadata (%s)" % istatcmd)
             # found_files[match] = match_filepath + " (Inode: " + str(match_inode) + ")"
-            match_info["Filepath"] = match_filepath.decode()
-            match_info["Filename"] = match_filepath.decode().split("/")[-1]
+            match_info["Filepath"] = match_filepath
+            match_info["Filename"] = match_filepath.split("/")[-1]
             match_info["Metadata"] = fs_util.parse_istat_metadata(fs_type, filesystem, match_inode)
         found_files[match_inode] = match_info
     return {"Occurrences": occurrences, "Found_Files": found_files}
@@ -195,21 +196,16 @@ def get_matches(wordlist: list, image: str, exclude_list: list = [],
     stringscmd = "strings -eS -td " + image
     if verbose:
         print("Extracting strings from %s (%s)" % (image, stringscmd))
-    stringsproc = subprocess.run(stringscmd, capture_output=True, shell=True)
-    strings = stringsproc.stdout
+    _, strings, _ = run_command(stringscmd)
     grepcmd = "grep -i -w -E '" + "|".join(wordlist) + "'"
     if verbose: 
         print("Searching for strings in wordlist (%s)" % grepcmd)
-    grepproc = subprocess.run(grepcmd, input=strings, capture_output=True, 
-                              shell=True)
-    foundstrings = grepproc.stdout
+    _, foundstrings, _ = run_command(grepcmd, input=strings)
     if len(exclude_list) > 0:
         invgrepcmd = "grep -i -v -E '" + "|".join(exclude_list) + "'"
         if verbose:
             print("Removing strings in exclude list (%s)" % invgrepcmd)
-        invgrepproc = subprocess.run(invgrepcmd, input=foundstrings, 
-                                     capture_output=True, shell=True)
-        foundstrings = invgrepproc.stdout
+        _, foundstrings, _ = run_command(invgrepcmd, input=foundstrings)
     if verbose:
         print("Finished finding matching strings.")
     return foundstrings.decode() 

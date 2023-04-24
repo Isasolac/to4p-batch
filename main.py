@@ -6,6 +6,7 @@ import report
 import tsk_utils
 import shutil
 import hashlib
+from tsk_utils import run_command
 
 '''
     Command line input: python ./main.py image1.dd image2.dd [...]
@@ -44,11 +45,10 @@ def main():
         if os.path.exists(image_dir_name):
             shutil.rmtree(image_dir_name)
         
-        stream = os.popen('mkdir '+image_dir_name)
+        _, _, _ = run_command('mkdir '+image_dir_name)
 
         # Step 1: use mmls to find filesystems
-        stream = os.popen('mmls ./'+image)
-        output = stream.read()
+        _, output, _ = run_command('mmls ./'+image)
         #print(output)
         md5, sha1 = hash(image)
 
@@ -61,7 +61,7 @@ def main():
 
         # Parse the output of mmls into information about the allocation of each partition
         # As well as reporting metadata
-        for line in output.splitlines():
+        for line in output.decode().splitlines():
 
             # Make a directory for the image files
 
@@ -90,8 +90,7 @@ def main():
                     # mmcat out the file system
                     command = 'mmcat ./'+image+' '+fs_key+' > '+name
                     #print(command)
-                    stream = os.popen(command)
-                    output = stream.read()
+                    _, _, _ = run_command(command)
 
                     # use fsstat to get the file system type
                     fs_type = get_fs_type(name)
@@ -215,9 +214,8 @@ def parse_mmls_line(line):
 def get_fs_type(carve_name):
 
     # Run fsstat on carved image
-    stream = os.popen('fsstat ./'+carve_name)
-    output = stream.read()
-
+    _, output, _ = run_command('fsstat ./'+carve_name)
+    output = output.decode()
     fs_type = "unknown"
     
     if "File System Type: NTFS" in output:

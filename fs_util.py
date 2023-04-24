@@ -1,5 +1,5 @@
-import subprocess
 import re
+from tsk_utils import run_command
 
 def get_sector_or_cluster(match: str, sector_or_cluster_size: int):
     """ Calculates the sector or cluster based on the given the offset of the 
@@ -27,10 +27,9 @@ def get_inode(fs_type: str, filesystem: str, cluster: int):
     Returns:
     The inode associated with the given cluster in the given filesystem
     """
-    ifind = subprocess.run(
-        "ifind -f %s %s -d %d" % (fs_type, filesystem, cluster), 
-        capture_output=True, shell=True)
-    return ifind.stdout
+    _, stdout, _ = run_command(
+        "ifind -f %s %s -d %d" % (fs_type, filesystem, cluster))
+    return stdout.decode()
 
 def parse_istat_metadata(fs_type: str, filesystem: str, inode: str):
     """ Retrieves the metadata about a given inode in the given filesystem
@@ -45,11 +44,9 @@ def parse_istat_metadata(fs_type: str, filesystem: str, inode: str):
         modified time for NTFS, and a check for whether the 
         $STANDARD_INFORMATION times match the $FILE_NAME times.
     """
-    istat = subprocess.run("istat -f %s %s %s" % (fs_type, filesystem, inode),
-                           capture_output=True, shell=True)
-    istat_out = istat.stdout.decode()
+    _, istat_out, _ = run_command("istat -f %s %s %s" % (fs_type, filesystem, inode))
     if fs_type == "ntfs":
-        chunks = istat_out.split("Attribute Values:\n")
+        chunks = istat_out.decode().split("Attribute Values:\n")
         std_info_times = chunks[1].split("\n\n")[0]
         std_info_times = std_info_times.split("\n")[-4:]
         file_name_times = chunks[2].split("\n\n")[0]
@@ -63,7 +60,7 @@ def parse_istat_metadata(fs_type: str, filesystem: str, inode: str):
                 "File_Name_Times": file_name_times, 
                 "Matching": matching}
     elif fs_type == "fat":
-        times = istat_out.split("Directory Entry Times:\n")[1]
+        times = istat_out.decode().split("Directory Entry Times:\n")[1]
         times = times.split("\n")[:3]
         return {"Times": times}
 
@@ -78,6 +75,5 @@ def get_filepath(fs_type: str, filesystem: str, inode: str):
     Returns: 
     The file path of the given inode in the given filesystem
     """
-    ffind = subprocess.run("ffind -f %s %s %s" % (fs_type, filesystem, inode),
-                           capture_output=True, shell=True)
-    return ffind.stdout
+    _, stdout, _ = run_command("ffind -f %s %s %s" % (fs_type, filesystem, inode))
+    return stdout.decode()
