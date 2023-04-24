@@ -200,78 +200,43 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None):
 
         # Searching Section
         f.write(html_separatesection)
-        if wordlist_data is not None:
-            write_wordlist_data(f, wordlist_data, fs_data)
 
         # HTML Closing
         f.write(html_closing)
 
 def write_wordlist_data(f, fs_data):
-    FILE_NAME_TIME_MISMATCH = "Doesn't match FILE_NAME time:"
-    SearchResult_number = 1
+    if len(fs_data["WordList"]["Found_Files"]) == 0:
+        return
+    f.write(f"<p><b>Word List Search Results</b><br>")
+    f.write(f"""
+            <table border="1">
+                <tr><b>
+                    <th>Found Words</th>
+                    <th>File Location</th>
+                    <th>Inode Address</th>
+                    <th>Last Access Time</th>
+                    <th>Tampered With?</th>
+                </tr></b>
+    """)
     fs_type = fs_data["Object"].type
-    for match, match_info in fs_data["WordList"]["Found_Files"].items():
-        # Content search
-        searchwordlist = match
-
-        # Search result information
-        SearchResultLine1_cluster = match_info["Cluster"]
-        SearchResultLine2_inodeaddress = match_info["Inode"]
-        SearchResultLine3_Filename = match_info["Filename"] if match_info["Filename"] is not None else "Not Found"
-        SearchResultLine4_FileLocation = match_info["Filepath"] if match_info["Filepath"] is not None else "Not Found"
-
-        html_searchresult = f"""
-            <p><b>Wordlist Search Result</b><br><br>
-                Search for: {searchwordlist}<br>
-        """
-
-        html_searchresultinfo = f"""
-            <p>Cluster: {SearchResultLine1_cluster}<br>
-            Inode address: {SearchResultLine2_inodeaddress}<br>
-            File name: {SearchResultLine3_Filename}<br>
-            File Location: {SearchResultLine4_FileLocation}<br></p>
-        """
-
-        f.write(html_searchresult)
-
-        # Search result (Adding loop later)
-        f.write(f"<p><b>## Search Result no. {SearchResult_number}</b><br>")
-        f.write(html_searchresultinfo)
-
-        # TODO: double check these fs type values
-        if fs_type == fs.SupportedTypes.NTFS:
-            FileNameTime_Created = match_info["Metadata"]["File_Name_Times"][0]
-            FileNameTime_FileModified = match_info["Metadata"]["File_Name_Times"][1]
-            FileNameTime_MFTModified = match_info["Metadata"]["File_Name_Times"][2]
-            FileNameTime_Accessed = match_info["Metadata"]["File_Name_Times"][3]
-
-            # Standard information Attribute Value for NTFS
-            StdInfoAttLine1_Created = match_info["Metadata"]["Standard_Info_Times"][0] + ("" if match_info["Metadata"]["Matching"][0] else f" ({FILE_NAME_TIME_MISMATCH} {FileNameTime_Created})")
-            StdInfoAttLine2_FileModified = match_info["Metadata"]["Standard_Info_Times"][1] + ("" if match_info["Metadata"]["Matching"][1] else f" ({FILE_NAME_TIME_MISMATCH} {FileNameTime_FileModified})")
-            StdInfoAttLine3_MFTModified = match_info["Metadata"]["Standard_Info_Times"][2] + ("" if match_info["Metadata"]["Matching"][2] else f" ({FILE_NAME_TIME_MISMATCH} {FileNameTime_MFTModified})")
-            StdInfoAttLine4_Accessed = match_info["Metadata"]["Standard_Info_Times"][3] + ("" if match_info["Metadata"]["Matching"][3] else f" ({FILE_NAME_TIME_MISMATCH} {FileNameTime_Accessed})")
-
-            html_StdInfoAtt_NTFS = f"""
-                <p><b>Standard Information Attribute Value</b><br>
-                    Created: {StdInfoAttLine1_Created}<br>
-                    File Modified: {StdInfoAttLine2_FileModified}<br>
-                    MFT Modified: {StdInfoAttLine3_MFTModified}<br>
-                    Accessed: {StdInfoAttLine4_Accessed}<br>
-                    Mismatching times may indicate anti-forensic tampering.</p>
-            """
-            f.write(html_StdInfoAtt_NTFS)
+    for match, entry in fs_data["WordList"]["Found_Files"].items():
+        f.write("<tr>\n")
+        f.write("<td>" + ", ".join(entry["Matched_Words"]) + "</td>\n")
+        f.write("<td>" + entry["Filepath"] + "</td>\n")
+        f.write("<td>" + entry["Inode"] + "</td>\n")
+        if entry["Metadata"] is None:
+            f.write("<td>Not found</td>\n")
+            f.write("<td>Unknown</td>\n")
+        elif fs_type == fs.SupportedTypes.NTFS:
+            f.write("<td>" + entry["Metadata"]["Standard_Info_Times"][3].split(":", 1)[1] + "</td>\n")
+            f.write("<td>" + ("No" if all(entry["Metadata"]["Matching"]) else "Unlikely" if entry["Metadata"]["Matching"][0] and entry["Metadata"]["Matching"][2] else "Maybe") + "</td>\n")
         elif fs_type == fs.SupportedTypes.FAT16 or fs_type == fs.SupportedTypes.FAT32:
-            # Directory Entry Times for FAT
-            DirInfoLine1_Written = match_info["Metadata"]["Times"][0]
-            DirInfoLine2_Accessed = match_info["Metadata"]["Times"][1]
-            DirInfoLine3_Created = match_info["Metadata"]["Times"][2]
+            f.write("<td>" + entry["Metadata"]["Times"][1].split(":", 1)[1] + "</td>\n")
+            f.write("<td>N/a</td>\n")
+        else:
+            f.write("<td></td>\n")
+            f.write("<td></td>\n")
+        f.write("</tr>\n")
 
-            html_DirectoryEntryTimes = f"""
-                <p><b>Directory Entry Times</b><br>
-                    Written: {DirInfoLine1_Written}<br>
-                    Accessed: {DirInfoLine2_Accessed}<br>
-                    Created: {DirInfoLine3_Created}</p>
-            """
-            f.write(html_DirectoryEntryTimes)
-        SearchResult_number += 1
+    f.write("</table></p>")
 
