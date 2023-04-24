@@ -228,10 +228,10 @@ def write_wordlist_data(f, fs_data):
             f.write("<td>Not found</td>\n")
             f.write("<td>Unknown</td>\n")
         elif fs_type == fs.SupportedTypes.NTFS:
-            f.write("<td>" + entry["Metadata"]["Standard_Info_Times"][3].split(":")[1] + "</td>\n")
+            f.write("<td>" + entry["Metadata"]["Standard_Info_Times"][3].split(":", 1)[1] + "</td>\n")
             f.write("<td>" + ("No" if all(entry["Metadata"]["Matching"]) else "Unlikely" if entry["Metadata"]["Matching"][0] and entry["Metadata"]["Matching"][2] else "Maybe") + "</td>\n")
         elif fs_type == fs.SupportedTypes.FAT16 or fs_type == fs.SupportedTypes.FAT32:
-            f.write("<td>" + entry["Metadata"]["Times"][1].split(":")[1] + "</td>\n")
+            f.write("<td>" + entry["Metadata"]["Times"][1].split(":", 1)[1] + "</td>\n")
             f.write("<td>N/a</td>\n")
         else:
             f.write("<td></td>\n")
