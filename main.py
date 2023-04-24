@@ -15,7 +15,6 @@ from tsk_utils import run_command
 # top level function that runs batch loop
 def main():
     
-    # TODO: parse each file
     # Set up argument parsing
     # Reference: https://docs.python.org/3/library/argparse.html 
     parser = argparse.ArgumentParser(description="Process images")
@@ -184,15 +183,29 @@ def main():
                     
         image_id += 1
     
-    # TODO: add to another arg
+    # Command line option for 'c' = correlate hashes of files
     if args.c:
+        # keys are file hashes, value is list of tuples 
+        # (image_id_search, image_id_found)
+        file_matches_dict = dict()
         for i in range(len(hash_file_list)):
+            hash_files = hash_file_list[i]
 
-            # TODO: get md5 as a list
-            # TODO: get sha1 as a list
-            # TODO: compare lists
-            
-            pass
+            for j in range(i, len(hash_file_list)):
+                # j is the 'starting index' of the comparison
+                for file in hash_files:
+                    md5hash = file['md5']
+
+                    # res will be a list of image ids where the file was found
+                    res = search_hashfiles_md5(md5hash,j,hash_file_list)
+
+                    # If res is not empty, then a match has been found
+                    if res != []:
+                        file_matches_dict[md5hash]= []
+
+                        for resmatch in res:
+                            file_matches_dict[md5hash].append((i,resmatch))
+
 
     for data in image_data_list:
         # volume_data, fs_data
@@ -278,6 +291,25 @@ def parse_hashlist(hashlist_file, fs_name):
                     matches.append(file)
 
     return matches
+
+# Returns a list of image IDs where this file was found
+def search_hashfiles_md5(file_hash, start_index, hash_file_list):
+
+    matches = []
+    for i in range(start_index, len(hash_file_list)):
+        hash_files = hash_file_list[i]
+
+        for file in hash_files:
+            target_file = file['md5']
+
+
+            if target_file == file_hash:
+                # Append the image id
+                matches.append(i)
+    
+    return matches
+
+
 
 def hash(file_path):
     md5 = hashlib.md5()
