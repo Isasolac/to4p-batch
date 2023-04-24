@@ -1,6 +1,8 @@
-import subprocess
 import re
 import fs_util
+import parse_fs
+from tsk_utils import run_command
+
 
 def wordlist_search_image(wordlist: list, image: str, image_data_tuple: tuple, 
                           exclude_list: list = [], 
@@ -44,7 +46,7 @@ def wordlist_search_image(wordlist: list, image: str, image_data_tuple: tuple,
     if verbose:
         print("Searching through matches for relevant partitions:")
     for match in matches_str.split("\n"):
-        if match == "":
+        if re.search("[0-9]+", match) is None:
             continue
         # get sector offset
         match_sector = fs_util.get_sector_or_cluster(
@@ -57,7 +59,7 @@ def wordlist_search_image(wordlist: list, image: str, image_data_tuple: tuple,
             print("Checking through paritions for matching sector")
         # use sector offset to find partition based on the filesystems in the image
         for fs_key, part in fs_data.items():
-            if part["Start"] <= match_sector <= part["End"]:
+            if int(part["Start"]) <= match_sector <= int(part["End"]):
                 if verbose:
                     print("Found sector %d in %s (between %d and %d)" % 
                           (match_sector, part["Name"], part["Start"], 
@@ -104,6 +106,8 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
         "Found_Files": dict: A mapping of the matching strings from the word 
             list to their associated files and inodes
     """
+    if type(fs_data["Object"]) == parse_fs.Unsupported:
+        return {"Occurrences": {word: 0 for word in wordlist}, "Found_Files": {}}
     if verbose:
         print("Finding matching strings in filesystem %s:" % filesystem)
     matches_str = get_matches(wordlist, filesystem, exclude_list, verbose)
@@ -119,29 +123,36 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
     if verbose:
         print("Searching through matches to find associated files:")
     for match in matches_str.split("\n"):
-        if match == "":
+        if re.search("[0-9]+", match) is None:
             continue
         match_cluster = fs_util.get_sector_or_cluster(match, fs_data["Object"].cluster_size)
         if verbose:
             byte_offset = int(re.search("[0-9]+", match).group())
             print("Match %s in cluster %d ( = %d / %d)" % 
                   (match, match_cluster, byte_offset, fs_data["Object"].cluster_size))
-        match_inode = fs_util.get_inode(fs_type, filesystem, match_cluster).decode()
+        match_inode = fs_util.get_inode(fs_type, filesystem, match_cluster)
         if verbose:
             ifindcmd = "ifind -f %s %s -d %d" % (fs_type, filesystem, match_cluster)
             print("Find the inode for cluster %d (%s)" % 
                   (match_cluster, ifindcmd))
-        match_info = {}
-        match_info["Cluster"] = match_cluster
-        match_info["Inode"] = match_inode
+        match_info = found_files[match_inode] if match_inode in found_files else {
+            "Matched_Words": set(),
+            "Cluster": match_cluster,
+            "Inode": match_inode,
+            "Filepath": "Not found",
+            "Filename": "Not found",
+            "Metadata": None
+        }
+        match_info["Matched_Words"] = match_info["Matched_Words"].union(
+            [word for word in wordlist if word.lower() in match.lower()])
+        # match_info["Match_Line"] = match
+        # match_info["Cluster"] = match_cluster
+        # match_info["Inode"] = match_inode
         if match_inode.startswith("Inode not found"):
             if verbose:
                 print("Couldn't find a matching inode for cluster %d" % 
                       match_cluster)
             # found_files[match] = "Cluster: %d (Inode not found)" % match_cluster
-            match_info["Filepath"] = None
-            match_info["Filename"] = None
-            match_info["Metadata"] = None
         else:
             if verbose:
                 print("Found inode %d for cluster %d" % (match_inode, 
@@ -160,7 +171,7 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
             match_info["Filepath"] = match_filepath
             match_info["Filename"] = match_filepath.split("/")[-1]
             match_info["Metadata"] = fs_util.parse_istat_metadata(fs_type, filesystem, match_inode)
-        found_files[match] = match_info
+        found_files[match_inode] = match_info
     return {"Occurrences": occurrences, "Found_Files": found_files}
 
 
@@ -185,21 +196,16 @@ def get_matches(wordlist: list, image: str, exclude_list: list = [],
     stringscmd = "strings -eS -td " + image
     if verbose:
         print("Extracting strings from %s (%s)" % (image, stringscmd))
-    stringsproc = subprocess.run(stringscmd, capture_output=True, shell=True)
-    strings = stringsproc.stdout
+    _, strings, _ = run_command(stringscmd)
     grepcmd = "grep -i -w -E '" + "|".join(wordlist) + "'"
     if verbose: 
         print("Searching for strings in wordlist (%s)" % grepcmd)
-    grepproc = subprocess.run(grepcmd, input=strings, capture_output=True, 
-                              shell=True)
-    foundstrings = grepproc.stdout
+    _, foundstrings, _ = run_command(grepcmd, input=strings)
     if len(exclude_list) > 0:
         invgrepcmd = "grep -i -v -E '" + "|".join(exclude_list) + "'"
         if verbose:
             print("Removing strings in exclude list (%s)" % invgrepcmd)
-        invgrepproc = subprocess.run(invgrepcmd, input=foundstrings, 
-                                     capture_output=True, shell=True)
-        foundstrings = invgrepproc.stdout
+        _, foundstrings, _ = run_command(invgrepcmd, input=foundstrings)
     if verbose:
         print("Finished finding matching strings.")
     return foundstrings.decode() 
