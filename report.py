@@ -288,4 +288,4 @@ def write_wordlist_data(f, wordlist_data, filesystemtype):
                 """
                 f.write(html_DirectoryEntryTimes)
             SearchResult_number += 1
-generate_report(1)
+#generate_report(1)
