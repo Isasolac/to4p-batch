@@ -2,6 +2,7 @@ import os
 import subprocess
 from xml.etree import ElementTree
 from fs import SupportedTypes
+import datetime
 
 FIWALK_DEFAULT_NS = "{http://www.forensicswiki.org/wiki/Category:Digital_Forensics_XML}"
 
@@ -9,9 +10,12 @@ def check_if_file_exists(path):
     if not os.path.isfile(path):
         raise FileNotFoundError("Could not find disk image!")
 
-def run_command(command):
-    process = subprocess.run(command, shell=True, capture_output=True)
-    return process.returncode, process.stdout.decode(), process.stderr.decode()
+def run_command(command, input = None):
+    with open("audit-log.txt", 'a') as f:
+        now = datetime.datetime.now().strftime("%B %d %Y %H:%M:%S")
+        f.write(f"{now}, {command.strip()} , Piped: {True if input is not None else False}\n")
+    process = subprocess.run(command, shell=True, capture_output=True, input = input)
+    return process.returncode, process.stdout, process.stderr
 
 def mmls(dd_image_path):
     check_if_file_exists(dd_image_path)
@@ -20,7 +24,7 @@ def mmls(dd_image_path):
 def fsstat(dd_image_path):
     check_if_file_exists(dd_image_path)
     returncode, stdout, stderr = run_command('fsstat ' + dd_image_path)
-    return returncode, stdout, stderr
+    return returncode, stdout.decode(), stderr.decode()
 
 def get_fs_type(dd_image_path):
     returncode, stdout, _ = fsstat(dd_image_path)
@@ -41,7 +45,7 @@ def fiwalk(dd_image_path):
     files = []
     try:
         _, output, _ = run_command("fiwalk -x -I -f " + dd_image_path)
-        root = ElementTree.fromstring(output)
+        root = ElementTree.fromstring(output.decode())
         # Since we will run fiwalk on a single FS partition, 
         # we should only have one volume 
         volume = root.find(FIWALK_DEFAULT_NS + "volume")
