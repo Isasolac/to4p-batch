@@ -206,6 +206,9 @@ def main():
 
                         for resmatch in res:
                             file_matches_dict[md5hash].append((i,resmatch))
+        
+        if file_matches_dict == {}:
+            print("No matches found from images")
 
 
     for data in image_data_list:
