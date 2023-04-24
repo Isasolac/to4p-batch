@@ -4,6 +4,8 @@ import parse_fs
 import wordlist
 import report
 import tsk_utils
+import shutil
+import hashlib
 
 '''
     Command line input: python ./main.py image1.dd image2.dd [...]
@@ -41,15 +43,19 @@ def main():
     for image in args.images:
 
         image_dir_name = "image"+"_"+str(image_id)
-
+        if os.path.exists(image_dir_name):
+            shutil.rmtree(image_dir_name)
+        
         stream = os.popen('mkdir '+image_dir_name)
 
         # Step 1: use mmls to find filesystems
         stream = os.popen('mmls ./'+image)
         output = stream.read()
         #print(output)
+        md5, sha1 = hash(image)
 
-        volume_data = {"Volume": "", "Sector_Size": -1, "Name": image, "Offset_Sector": -1}
+        volume_data = {"Volume": "", "Sector_Size": -1, "Name": image, "Offset_Sector": -1, "MD5": md5, "SHA1": sha1}
+
         fs_data = dict()
         fs_data_start = False
 
@@ -97,6 +103,10 @@ def main():
 
                     fs_data[fs_key] = data
 
+                    md5, sha1 = hash(name)
+                    data["MD5"] = md5
+                    data["SHA1"] = sha1
+
                     # increment the fs_id so names don't overlap
                     fs_id = fs_id+1
 
@@ -142,13 +152,22 @@ def main():
             # associated with this partition ID
             if data["Partition"]:
                 # Create the fs object
+                data["HashList"] = None
+                data["WordList"] = None
                 if data["Type"] == "NTFS":
                     data["Object"] = parse_fs.NTFS(data["Name"])
+                    data["HashList"] = None if not args.hashlist else parse_hashlist(args.hashlist,data["Name"])
+                    data["WordList"] = None if not args.wordlist else wordlist.wordlist_search_filesystem(words, data["Name"], data)
                 elif data["Type"] == "FAT16":
                     data["Object"] = parse_fs.FAT16(data["Name"])
+                    data["HashList"] = None if not args.hashlist else parse_hashlist(args.hashlist,data["Name"])
+                    data["WordList"] = None if not args.wordlist else wordlist.wordlist_search_filesystem(words, data["Name"], data)
                 elif data["Type"] == "FAT32":
                     data["Object"] = parse_fs.FAT32(data["Name"])
+                    data["HashList"] = None if not args.hashlist else parse_hashlist(args.hashlist,data["Name"])
+                    data["WordList"] = None if not args.wordlist else wordlist.wordlist_search_filesystem(words, data["Name"], data)
                 else:
+                    data["Object"] = parse_fs.Unsupported(data["Name"])
                     print("FS Type Unknown for key "+key)
                 
                 print("Slot "+key+" is a partition,")
@@ -163,23 +182,11 @@ def main():
                     hash_file_list.append(hash_files)
                     
         image_id += 1
-
     
-
-
-    if args.wordlist:
-        # Add calls to lines that parse the wordlist
-        
-        for data in image_data_list:
-            # data[0]["Name"] == volume_data
-            wordlist.wordlist_search_image(words,data[0]["Name"],data)
-        
-    
-    if not args.wordlist and not args.hashlist:
-        for data in image_data_list:
-
-            # volume_data, fs_data
-            report.generate_report(data[0], data[1])
+    for data in image_data_list:
+        # volume_data, fs_data
+        # wordlist_data = None if not args.wordlist else wordlist.wordlist_search_image(words,data[0]["Name"],data)
+        report.generate_report(data[0], data[1])
 
 '''
 count: the number ID of the resulting carved filesystem ex "1_1"
@@ -256,15 +263,24 @@ def parse_hashlist(hashlist_file, fs_name):
 
             # Use word to search filesystem
             for file in file_list:
-                #print(file)
-                if  (file["md5"] == hashsum):
-                    matches.append({"Type": "md5", "Name": file["filename"], "Inode": file["inode"]})
-                elif (file["sha1"] == hashsum):
-                    matches.append({"Type": "sha1", "Name": file["filename"], "Inode": file["inode"]})
-
-
+                if  (file["md5"] == hashsum) or (file["sha1"] == hashsum):
+                    file["matching_hash"] = "md5" if (file["md5"] == hashsum) else "sha1"
+                    matches.append(file)
 
     return matches
 
+def hash(file_path):
+    md5 = hashlib.md5()
+    sha1 = hashlib.sha1()
+
+    with open(file_path, 'rb') as f:
+        while True:
+            data = f.read(4096)
+            if not data:
+                break
+            md5.update(data)
+            sha1.update(data)
+    return md5.hexdigest(), sha1.hexdigest()
+ 
 if __name__ == '__main__':
     main()

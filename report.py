@@ -3,7 +3,7 @@ import datetime
 import parse_fs as fs
 
 def handle_fs_data(filesystem: fs.FileSystem):
-    filesystem_info = "Not Analysed"
+    filesystem_info = "Not Analysed<br><br>"
     metadata_info = ""
     content_info = ""
 
@@ -47,35 +47,39 @@ def handle_fs_data(filesystem: fs.FileSystem):
         """
     return filesystem_info, metadata_info, content_info
 
+def write_hash_data(f, hash_data):
+    if len(hash_data) == 0:
+        return
+    f.write(f"<p><b>Hash Search Result</b><br>")
+    f.write(f"""
+            <table border="1">
+                <tr><b>
+                    <th>Inode</th>
+                    <th>File</th>
+                    <th>Type</th>
+                    <th>Last Access Time</th>
+                    <th>MD5 Hash</th>
+                    <th>SHA1 Hash</th>
+                </tr></b>
+    """)
+    for entry in hash_data:
+        f.write("<tr>\n")
+        f.write("<td>" + entry['inode'] + "</td>\n")
+        f.write("<td>" + entry["filename"] + "</td>\n")
+        f.write("<td>" + entry["type"] + "</td>\n")
+        f.write("<td>" + entry["atime"] + "</td>\n")
+        if entry["matching_hash"] == "md5":
+            f.write("<td><b>" + entry["md5"] + "</b></td>\n")
+            f.write("<td>" + entry["sha1"] + "</td>\n")
+        else:
+            f.write("<td>" + entry["md5"] + "</td>\n")
+            f.write("<td><b>" + entry["sha1"] + "</b></td>\n")
+        f.write("</tr>\n")
+
+    f.write("</table></p>")
 
 
-def generate_report(volume_data, fs_data: dict, wordlist_data = None, hash_data = None):
-    # TODO: what form should our data be stored in?
-    # TODO: how can we generate a report?
-
-    # PERSON 4
-    
-#output_html_path=os.getcwd()+"//"+"out.html"
-    fs_data = {}
-    fs_data["8"] = {
-        "Partition": True,
-        "Slot": "10",
-        "Start" : "42",
-        "End": "862",
-        "Size": "12736",
-        "Description": "Hello there",
-        "Object": fs.NTFS("./ntfs.dd") 
-    }
-
-    fs_data["12"] = {
-        "Partition": True,
-        "Slot": "11",
-        "Start" : "43",
-        "End": "86234",
-        "Size": "12236",
-        "Description": "General Kenobi",
-        "Object": fs.FAT16("./fat.dd") 
-    }
+def generate_report(volume_data, fs_data: dict, wordlist_data = None):
     
     # Get current date and time
     now = datetime.datetime.now()
@@ -88,8 +92,8 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None, hash_data 
 
     # Image Variable
     image_file_name = volume_data["Name"]
-    MD5_result = "MD5resulthere"
-    SHA1_result = "SHA1resulthere"
+    MD5_result = volume_data["MD5"]
+    SHA1_result = volume_data["SHA1"]
 
     # Define HTML Output file name
     htmloutputfile = image_file_name + ".html"
@@ -141,12 +145,6 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None, hash_data 
                 </tr></b>
     """
 
-    html_partitioninfo = f"""
-        <p><b>Hash Result</b><br>
-        MD5: {MD5_result}<br>
-        SHA-1: {SHA1_result}</p>
-    """
-
     html_separatesection = f"""
         <b>---------------------------------------------------------------------------------------</b>
     """
@@ -166,20 +164,6 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None, hash_data 
 
         # Disk Image Information (Adding loop later)
         f.write(html_diskinfo)
-        f.write("<p><b>List Partition Information</b><br>")
-        f.write(html_partitiontableheader)
-
-        f.write("<tr>\n")
-        for item in partition1:
-            f.write("<td>" + str(item) + "</td>\n")
-        f.write("</tr>\n")
-
-        f.write("<tr>\n")
-        for item in partition2:
-            f.write("<td>" + str(item) + "</td>\n")
-        f.write("</tr>\n")
-
-        f.write("</table></p>")
 
         # Partition Information (Adding loop later)
         for partition_id in fs_data:
@@ -200,92 +184,94 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None, hash_data 
             f.write("</tr>\n")
 
             f.write("</table></p>")
-            # FIXME: Add hash data
-            f.write(html_partitioninfo)
+            f.write(f"""
+                <p><b>Hash Result</b><br>
+                MD5: {data["MD5"]}<br>
+                SHA-1: {data["SHA1"]}</p>
+            """)
             filesystem_info, metadata_info, content_info = handle_fs_data(data["Object"])
             f.write(filesystem_info)
             f.write(metadata_info)
             f.write(content_info)
+            if data["HashList"] is not None:
+                write_hash_data(f, data["HashList"])
+            if data["WordList"] is not None:
+                write_wordlist_data(f, data)
 
         # Searching Section
         f.write(html_separatesection)
         if wordlist_data is not None:
-            write_wordlist_data(f, wordlist_data, filesystemtype)
+            write_wordlist_data(f, wordlist_data, fs_data)
 
         # HTML Closing
         f.write(html_closing)
 
-def write_wordlist_data(f, wordlist_data, filesystemtype):
+def write_wordlist_data(f, fs_data):
     FILE_NAME_TIME_MISMATCH = "Doesn't match FILE_NAME time:"
     SearchResult_number = 1
-    for part_id, part_data in wordlist_data.items():
-        if part_id == "Total_Occurrences":
-            continue
-        elif part_id == "Relevant_Partitions":
-            continue
-        for match, match_info in part_data["Found_Files"].items():
-            # Content search
-            searchwordlist = match
+    fs_type = fs_data["Object"].type
+    for match, match_info in fs_data["WordList"]["Found_Files"].items():
+        # Content search
+        searchwordlist = match
 
-            # Search result information
-            SearchResultLine1_cluster = match_info["Cluster"]
-            SearchResultLine2_inodeaddress = match_info["Inode"]
-            SearchResultLine3_Filename = match_info["Filename"] if match_info["Filename"] is not None else "Not Found"
-            SearchResultLine4_FileLocation = match_info["Filepath"] if match_info["Filepath"] is not None else "Not Found"
+        # Search result information
+        SearchResultLine1_cluster = match_info["Cluster"]
+        SearchResultLine2_inodeaddress = match_info["Inode"]
+        SearchResultLine3_Filename = match_info["Filename"] if match_info["Filename"] is not None else "Not Found"
+        SearchResultLine4_FileLocation = match_info["Filepath"] if match_info["Filepath"] is not None else "Not Found"
 
-            html_searchresult = f"""
-                <p><b>Wordlist Search Result</b><br><br>
-                    Search for: {searchwordlist}<br>
+        html_searchresult = f"""
+            <p><b>Wordlist Search Result</b><br><br>
+                Search for: {searchwordlist}<br>
+        """
+
+        html_searchresultinfo = f"""
+            <p>Cluster: {SearchResultLine1_cluster}<br>
+            Inode address: {SearchResultLine2_inodeaddress}<br>
+            File name: {SearchResultLine3_Filename}<br>
+            File Location: {SearchResultLine4_FileLocation}<br></p>
+        """
+
+        f.write(html_searchresult)
+
+        # Search result (Adding loop later)
+        f.write(f"<p><b>## Search Result no. {SearchResult_number}</b><br>")
+        f.write(html_searchresultinfo)
+
+        # TODO: double check these fs type values
+        if fs_type == fs.SupportedTypes.NTFS:
+            FileNameTime_Created = match_info["Metadata"]["File_Name_Times"][0]
+            FileNameTime_FileModified = match_info["Metadata"]["File_Name_Times"][1]
+            FileNameTime_MFTModified = match_info["Metadata"]["File_Name_Times"][2]
+            FileNameTime_Accessed = match_info["Metadata"]["File_Name_Times"][3]
+
+            # Standard information Attribute Value for NTFS
+            StdInfoAttLine1_Created = match_info["Metadata"]["Standard_Info_Times"][0] + ("" if match_info["Metadata"]["Matching"][0] else f" ({FILE_NAME_TIME_MISMATCH} {FileNameTime_Created})")
+            StdInfoAttLine2_FileModified = match_info["Metadata"]["Standard_Info_Times"][1] + ("" if match_info["Metadata"]["Matching"][1] else f" ({FILE_NAME_TIME_MISMATCH} {FileNameTime_FileModified})")
+            StdInfoAttLine3_MFTModified = match_info["Metadata"]["Standard_Info_Times"][2] + ("" if match_info["Metadata"]["Matching"][2] else f" ({FILE_NAME_TIME_MISMATCH} {FileNameTime_MFTModified})")
+            StdInfoAttLine4_Accessed = match_info["Metadata"]["Standard_Info_Times"][3] + ("" if match_info["Metadata"]["Matching"][3] else f" ({FILE_NAME_TIME_MISMATCH} {FileNameTime_Accessed})")
+
+            html_StdInfoAtt_NTFS = f"""
+                <p><b>Standard Information Attribute Value</b><br>
+                    Created: {StdInfoAttLine1_Created}<br>
+                    File Modified: {StdInfoAttLine2_FileModified}<br>
+                    MFT Modified: {StdInfoAttLine3_MFTModified}<br>
+                    Accessed: {StdInfoAttLine4_Accessed}<br>
+                    Mismatching times may indicate anti-forensic tampering.</p>
             """
+            f.write(html_StdInfoAtt_NTFS)
+        elif fs_type == fs.SupportedTypes.FAT16 or fs_type == fs.SupportedTypes.FAT32:
+            # Directory Entry Times for FAT
+            DirInfoLine1_Written = match_info["Metadata"]["Times"][0]
+            DirInfoLine2_Accessed = match_info["Metadata"]["Times"][1]
+            DirInfoLine3_Created = match_info["Metadata"]["Times"][2]
 
-            html_searchresultinfo = f"""
-                <p>Cluster: {SearchResultLine1_cluster}<br>
-                Inode address: {SearchResultLine2_inodeaddress}<br>
-                File name: {SearchResultLine3_Filename}<br>
-                File Location: {SearchResultLine4_FileLocation}<br>
-                Partition ID: {part_id}<br></p>
+            html_DirectoryEntryTimes = f"""
+                <p><b>Directory Entry Times</b><br>
+                    Written: {DirInfoLine1_Written}<br>
+                    Accessed: {DirInfoLine2_Accessed}<br>
+                    Created: {DirInfoLine3_Created}</p>
             """
+            f.write(html_DirectoryEntryTimes)
+        SearchResult_number += 1
 
-            f.write(html_searchresult)
-
-            # Search result (Adding loop later)
-            f.write(f"<p><b>## Search Result no. {SearchResult_number}</b><br>")
-            f.write(html_searchresultinfo)
-
-            # TODO: double check these fs type values
-            if filesystemtype == "NTFS":
-                FileNameTime_Created = match_info["Metadata"]["File_Name_Times"][0]
-                FileNameTime_FileModified = match_info["Metadata"]["File_Name_Times"][1]
-                FileNameTime_MFTModified = match_info["Metadata"]["File_Name_Times"][2]
-                FileNameTime_Accessed = match_info["Metadata"]["File_Name_Times"][3]
-
-                # Standard information Attribute Value for NTFS
-                StdInfoAttLine1_Created = match_info["Metadata"]["Standard_Info_Times"][0] + ("" if match_info["Metadata"]["Matching"][0] else f" ({FILE_NAME_TIME_MISMATCH} {FileNameTime_Created})")
-                StdInfoAttLine2_FileModified = match_info["Metadata"]["Standard_Info_Times"][1] + ("" if match_info["Metadata"]["Matching"][1] else f" ({FILE_NAME_TIME_MISMATCH} {FileNameTime_FileModified})")
-                StdInfoAttLine3_MFTModified = match_info["Metadata"]["Standard_Info_Times"][2] + ("" if match_info["Metadata"]["Matching"][2] else f" ({FILE_NAME_TIME_MISMATCH} {FileNameTime_MFTModified})")
-                StdInfoAttLine4_Accessed = match_info["Metadata"]["Standard_Info_Times"][3] + ("" if match_info["Metadata"]["Matching"][3] else f" ({FILE_NAME_TIME_MISMATCH} {FileNameTime_Accessed})")
-
-                html_StdInfoAtt_NTFS = f"""
-                    <p><b>Standard Information Attribute Value</b><br>
-                        Created: {StdInfoAttLine1_Created}<br>
-                        File Modified: {StdInfoAttLine2_FileModified}<br>
-                        MFT Modified: {StdInfoAttLine3_MFTModified}<br>
-                        Accessed: {StdInfoAttLine4_Accessed}<br>
-                        Mismatching times may indicate anti-forensic tampering.</p>
-                """
-                f.write(html_StdInfoAtt_NTFS)
-            elif filesystemtype == "FAT":
-                # Directory Entry Times for FAT
-                DirInfoLine1_Written = match_info["Metadata"]["Times"][0]
-                DirInfoLine2_Accessed = match_info["Metadata"]["Times"][1]
-                DirInfoLine3_Created = match_info["Metadata"]["Times"][2]
-
-                html_DirectoryEntryTimes = f"""
-                    <p><b>Directory Entry Times</b><br>
-                        Written: {DirInfoLine1_Written}<br>
-                        Accessed: {DirInfoLine2_Accessed}<br>
-                        Created: {DirInfoLine3_Created}</p>
-                """
-                f.write(html_DirectoryEntryTimes)
-            SearchResult_number += 1
-generate_report(1)
