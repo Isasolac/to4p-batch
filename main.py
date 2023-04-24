@@ -28,6 +28,8 @@ def main():
     image_data_list = []
     image_name_list = []
 
+    hash_file_list = []
+
     if args.wordlist:
         words = parse_wordlist(args.wordlist)
 
@@ -155,7 +157,10 @@ def main():
 
                 # Call parse_hashlist
                 if args.hashlist:
-                    parse_hashlist(args.hashlist,data["Name"])
+                    hash_files = parse_hashlist(args.hashlist,data["Name"])
+
+                    # TODO: add to another arg
+                    hash_file_list.append(hash_files)
                     
         image_id += 1
 
