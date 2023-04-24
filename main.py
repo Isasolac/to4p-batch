@@ -54,7 +54,7 @@ def main():
         #print(output)
         md5, sha1 = hash(image)
 
-        volume_data = {"Volume": "", "Sector_Size": -1, "Name": image, "Offset_Sector": -1, "MD5": md5, "SHA1": sha1}
+        volume_data = {"Volume": "", "Sector_Size": -1, "Name": image, "Offset_Sector": -1, "MD5": md5, "SHA1": sha1, "Partition_Num": 0}
 
         fs_data = dict()
         fs_data_start = False
@@ -82,6 +82,7 @@ def main():
                     #print(data["Description"])
                     # Find the type of file system
                     fs_type = 'partition'
+                    volume_data["Partition_Num"] += 1
 
                     # Create the name
                     name = image_dir_name+"/"+fs_type + "_" + str(fs_id) + ".dd"
@@ -179,23 +180,32 @@ def main():
 
                 # Add to another arg
                 if args.correlate:
+                    print("adding hash file list")
                     hash_file_list.append(tsk_utils.fiwalk(data["Name"]))
                     
         image_id += 1
     
     # Command line option for 'c' = correlate hashes of files
     if args.correlate:
+        
 
         # keys are file hashes, value is list of tuples 
         # (image_id_search, image_id_found)
         file_matches_dict = dict()
-        for i in range(len(hash_file_list)):
-            hash_files = hash_file_list[i]
 
-            for j in range(i, len(hash_file_list)):
+        # For every filesystem (except the last)
+        for i in range(len(hash_file_list)-1):
+            hash_files = hash_file_list[i]
+            print(hash_files)
+
+            # Compare it to all the files in proceeding
+            for j in range(i+1, len(hash_file_list)):
                 # j is the 'starting index' of the comparison
                 for file in hash_files:
                     md5hash = file['md5']
+
+                    if md5hash == None:
+                        continue
 
                     # res will be a list of image ids where the file was found
                     res = search_hashfiles_md5(md5hash,j,hash_file_list)
@@ -207,6 +217,7 @@ def main():
                         for resmatch in res:
                             file_matches_dict[md5hash].append((i,resmatch))
         
+        print(file_matches_dict)
         if file_matches_dict == {}:
             print("No matches found from images")
 
