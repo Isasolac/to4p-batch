@@ -178,13 +178,14 @@ def main():
                     hash_files = parse_hashlist(args.hashlist,data["Name"])
 
                     # Add to another arg
-                    if args.c:
+                    if args.correlate:
                         hash_file_list.append(hash_files)
                     
         image_id += 1
     
     # Command line option for 'c' = correlate hashes of files
-    if args.c:
+    if args.correlate:
+
         # keys are file hashes, value is list of tuples 
         # (image_id_search, image_id_found)
         file_matches_dict = dict()
