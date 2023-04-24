@@ -121,7 +121,7 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
     #     raise
     if verbose:
         print("Searching through matches to find associated files:")
-    for i, match in enumerate(matches_str.split("\n")):
+    for match in matches_str.split("\n"):
         if re.search("[0-9]+", match) is None:
             continue
         match_cluster = fs_util.get_sector_or_cluster(match, fs_data["Object"].cluster_size)
@@ -134,18 +134,24 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
             ifindcmd = "ifind -f %s %s -d %d" % (fs_type, filesystem, match_cluster)
             print("Find the inode for cluster %d (%s)" % 
                   (match_cluster, ifindcmd))
-        match_info = {}
-        match_info["Match_Line"] = match
-        match_info["Cluster"] = match_cluster
-        match_info["Inode"] = match_inode
+        match_info = found_files[match_inode] if match_inode in found_files else {
+            "Matched_Words": set(),
+            "Cluster": match_cluster,
+            "Inode": match_inode,
+            "Filepath": "Not found",
+            "Filename": "Not found",
+            "Metadata": None
+        }
+        match_info["Matched_Words"] = match_info["Matched_Words"].union(
+            [word for word in wordlist if word.lower() in match.lower()])
+        # match_info["Match_Line"] = match
+        # match_info["Cluster"] = match_cluster
+        # match_info["Inode"] = match_inode
         if match_inode.startswith("Inode not found"):
             if verbose:
                 print("Couldn't find a matching inode for cluster %d" % 
                       match_cluster)
             # found_files[match] = "Cluster: %d (Inode not found)" % match_cluster
-            match_info["Filepath"] = None
-            match_info["Filename"] = None
-            match_info["Metadata"] = None
         else:
             if verbose:
                 print("Found inode %d for cluster %d" % (match_inode, 
@@ -164,7 +170,7 @@ def wordlist_search_filesystem(wordlist: list, filesystem: str, fs_data,
             match_info["Filepath"] = match_filepath.decode()
             match_info["Filename"] = match_filepath.decode().split("/")[-1]
             match_info["Metadata"] = fs_util.parse_istat_metadata(fs_type, filesystem, match_inode)
-        found_files["Match " + str(i+1) + ": " + ", ".join([i for i in wordlist if i.lower() in match.lower()])] = match_info
+        found_files[match_inode] = match_info
     return {"Occurrences": occurrences, "Found_Files": found_files}
 
 
