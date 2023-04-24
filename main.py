@@ -183,6 +183,15 @@ def main():
                     
         image_id += 1
     
+    # TODO: add to another arg
+    for i in range(len(hash_file_list)):
+
+        # TODO: get md5 as a list
+        # TODO: get sha1 as a list
+        # TODO: compare lists
+        
+        pass
+
     for data in image_data_list:
         # volume_data, fs_data
         # wordlist_data = None if not args.wordlist else wordlist.wordlist_search_image(words,data[0]["Name"],data)
