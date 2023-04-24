@@ -25,6 +25,7 @@ def main():
                         type=str, required=False)
     parser.add_argument('-s', '--hashlist', metavar='hashlist.txt',
                         type=str, required=False)
+    parser.add_argument('-c', '--correlate', action='store_true')
     args = parser.parse_args()
 
     # Collects the dictionary information about each image
@@ -177,19 +178,21 @@ def main():
                 if args.hashlist:
                     hash_files = parse_hashlist(args.hashlist,data["Name"])
 
-                    # TODO: add to another arg
-                    hash_file_list.append(hash_files)
+                    # Add to another arg
+                    if args.c:
+                        hash_file_list.append(hash_files)
                     
         image_id += 1
     
     # TODO: add to another arg
-    for i in range(len(hash_file_list)):
+    if args.c:
+        for i in range(len(hash_file_list)):
 
-        # TODO: get md5 as a list
-        # TODO: get sha1 as a list
-        # TODO: compare lists
-        
-        pass
+            # TODO: get md5 as a list
+            # TODO: get sha1 as a list
+            # TODO: compare lists
+            
+            pass
 
     for data in image_data_list:
         # volume_data, fs_data
