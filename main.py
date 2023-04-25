@@ -60,7 +60,7 @@ def main():
         volume_data = {"Volume": "", "Sector_Size": -1, 
                        "Name": image, "Offset_Sector": -1, 
                        "MD5": md5, "SHA1": sha1, 
-                       "Partition_Num": 0}
+                       "Partition_Num": 0, "File_Matches": None}
 
         fs_data = dict()
         fs_data_start = False
