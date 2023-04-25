@@ -206,18 +206,15 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None):
         f.write(html_closing)
 
 '''
-file_matches: dict where keys are image names
-and values are a triple of (hash, filename, matched image name)
+file_matches: list of values are a triple of (hash, filename, matched image name)
 '''
 def write_filematch_data(f, file_matches, name):
 
     f.write(f"<p><b>File Match Search Results</b><br>")
 
     if len(file_matches) == 0:
-        f.write(f"No matches found across images.")
-        return
-    elif len(file_matches[name]) == 0:
         f.write(f"No matches found for this image.")
+        return
     
     file_list = file_matches[name]
     f.write(f"""
