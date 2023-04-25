@@ -360,7 +360,7 @@ def search_hashfiles_md5(file_hash, start_index, hash_file_list):
             if target_file == file_hash:
                 # Append the image id
                 matches.append(i)
-                inodes.append(target_file['inode'])
+                inodes.append(file['inode'])
     
     return matches,inodes
 
