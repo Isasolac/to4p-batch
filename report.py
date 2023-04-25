@@ -122,9 +122,6 @@ def generate_report(volume_data, fs_data: dict, output: str):
     DiskInfoLine2_OffsetSector = volume_data["Offset_Sector"]
     DiskInfoLine3_BytePerSector = volume_data["Sector_Size"]
 
-    partition1 = ["11", "12", "13", "14", "15", "16"]
-    partition2 = ["21", "22", "23", "24", "25", "26"]
-
     # Define HTML report structure
     html_opening = f"""
     <!DOCTYPE html>
@@ -184,6 +181,10 @@ def generate_report(volume_data, fs_data: dict, output: str):
         # Disk Image Information (Adding loop later)
         f.write(html_diskinfo)
 
+        # Add portion about filesystem matches here
+        if volume_data["File_Matches"] is not None:
+            write_filematch_data(f, volume_data["File_Matches"], volume_data["Name"])
+
         # Partition Information (Adding loop later)
         for partition_id in fs_data:
             data = fs_data[partition_id]
@@ -223,6 +224,40 @@ def generate_report(volume_data, fs_data: dict, output: str):
         # HTML Closing
         f.write(html_closing)
 
+'''
+file_matches: list of values are a triple of (hash, filename, matched image name)
+'''
+def write_filematch_data(f, file_matches, name):
+
+    f.write(f"<p><b>File Match Search Results</b><br>")
+
+    if len(file_matches) == 0:
+        f.write(f"No matches found for this image.")
+        return
+    
+    file_list = file_matches[name]
+    f.write(f"""
+            <table border="1">
+                <tr><b>
+                    <th>Matched Hash</th>
+                    <th>Filename</th>
+                    <th>Matched Image</th>
+                </tr></b>
+    """)
+
+    for file_info in file_list:
+        matched_hash = file_info[0]
+        filename = file_info[1]
+        matched_image = file_info[2]
+
+        f.write("<tr>\n")
+        f.write("<td>" + matched_hash + "</td>\n")
+        f.write("<td>" + filename + "</td>\n")
+        f.write("<td>" + matched_image + "</td>\n")
+        f.write("</tr>\n")
+    
+    f.write("</table></p>")
+
 def write_wordlist_data(f, fs_data, output):
     if len(fs_data["WordList"]["Found_Files"]) == 0:
         return
@@ -257,10 +292,10 @@ def write_wordlist_data(f, fs_data, output):
             f.write("<td>Not found</td>\n")
             f.write("<td>Unknown</td>\n")
         elif fs_type == fs.SupportedTypes.NTFS:
-            f.write("<td>" + entry["Metadata"]["Standard_Info_Times"][3].split(":")[1] + "</td>\n")
+            f.write("<td>" + entry["Metadata"]["Standard_Info_Times"][3].split(":", 1)[1] + "</td>\n")
             f.write("<td>" + ("No" if all(entry["Metadata"]["Matching"]) else "Unlikely" if entry["Metadata"]["Matching"][0] and entry["Metadata"]["Matching"][2] else "Maybe") + "</td>\n")
         elif fs_type == fs.SupportedTypes.FAT16 or fs_type == fs.SupportedTypes.FAT32:
-            f.write("<td>" + entry["Metadata"]["Times"][1].split(":")[1] + "</td>\n")
+            f.write("<td>" + entry["Metadata"]["Times"][1].split(":", 1)[1] + "</td>\n")
             f.write("<td>N/a</td>\n")
         else:
             f.write("<td></td>\n")
