@@ -5,6 +5,7 @@ import wordlist
 import report
 import shutil
 from tsk_utils import run_command, hash, fiwalk
+import hashlib
 
 '''
     Command line input: python ./main.py image1.dd image2.dd [...]
@@ -188,7 +189,7 @@ def main():
                 # Add to another arg
                 if args.correlate:
                     print("adding hash file list")
-                    hash_file_list.append(tsk_utils.fiwalk(data["Name"]))
+                    hash_file_list.append(fiwalk(data["Name"]))
                     
         image_id += 1
 

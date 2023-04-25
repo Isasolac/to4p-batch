@@ -235,13 +235,14 @@ def write_filematch_data(f, file_matches, name):
         f.write(f"No matches found for this image.")
         return
     
-    file_list = file_matches[name]
+    file_list = file_matches
     f.write(f"""
             <table border="1">
                 <tr><b>
                     <th>Matched Hash</th>
                     <th>Filename</th>
                     <th>Matched Image</th>
+                    <th>Inode</th>
                 </tr></b>
     """)
 
@@ -249,11 +250,13 @@ def write_filematch_data(f, file_matches, name):
         matched_hash = file_info[0]
         filename = file_info[1]
         matched_image = file_info[2]
+        inode_image = file_info[3]
 
         f.write("<tr>\n")
         f.write("<td>" + matched_hash + "</td>\n")
         f.write("<td>" + filename + "</td>\n")
         f.write("<td>" + matched_image + "</td>\n")
+        f.write("<td>" + inode_image + "</td>\n")
         f.write("</tr>\n")
     
     f.write("</table></p>")
