@@ -207,7 +207,7 @@ def main():
         # For every filesystem (except the last)
         for i in range(len(hash_file_list)-1):
             hash_files = hash_file_list[i]
-            image_name = partition_id_to_image_name(i,image_data_list)
+            image_name,internal_partition = partition_id_to_image_name(i,image_data_list)
             #file_matches_dict[image_name] = []
 
             # Compare it to all the files in proceeding
@@ -228,12 +228,12 @@ def main():
                     for resmatch in res:
                         res_data = partition_id_to_image_name(resmatch,image_data_list)
                         other_image_name = res_data[0]
-                        internal_partition = res_data[1]
+                        other_internal_partition = res_data[1]
 
                         # Check to make sure it's not finding a duplicate file in the same image's different fs
                         if image_name != other_image_name:
                             file_matches_dict[image_name].append((md5hash,file['filename'],other_image_name,file['inode'],internal_partition))
-                            file_matches_dict[other_image_name].append((md5hash,file['filename'],image_name,file['inode'],internal_partition))
+                            file_matches_dict[other_image_name].append((md5hash,file['filename'],image_name,file['inode'],other_internal_partition))
                         
         
         if file_matches_dict == {}:

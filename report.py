@@ -259,7 +259,7 @@ def write_filematch_data(f, file_matches, name):
         f.write("<td>" + filename + "</td>\n")
         f.write("<td>" + matched_image + "</td>\n")
         f.write("<td>" + inode_image + "</td>\n")
-        f.write("<td>" + internal_partition + "</td>\n")
+        f.write("<td>" + str(internal_partition) + "</td>\n")
         f.write("</tr>\n")
     
     f.write("</table></p>")
