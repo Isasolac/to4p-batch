@@ -48,6 +48,8 @@ def main():
 
     for image in args.images:
 
+        print("Beginning analysis of image "+image+"...")
+
         image_dir_name = "image"+"_"+str(image_id)
         if os.path.exists(image_dir_name):
             shutil.rmtree(image_dir_name)
@@ -141,7 +143,6 @@ def main():
 
                 # Sector size is in bytes
                 sector_size = int((tokens[3].partition("-"))[0])
-                print("sector size is: "+str(sector_size))
                 volume_data["Sector_Size"] = sector_size
 
             elif "Slot" in line:
@@ -178,9 +179,7 @@ def main():
                     data["Object"] = parse_fs.Unsupported(data["Name"])
                     print("FS Type Unknown for key "+key)
                 
-                print("Slot "+key+" is a partition,")
-                print("File system type: "+data["Type"])
-                print("Carved name = "+data["Name"])
+                
 
                 # Call parse_hashlist
                 if args.hashlist:
@@ -188,7 +187,7 @@ def main():
 
                 # Add to another arg
                 if args.correlate:
-                    print("adding hash file list")
+                    print("Adding hash files from another filesystem...")
                     hash_file_list.append(fiwalk(data["Name"]))
                     
         image_id += 1
