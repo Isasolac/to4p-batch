@@ -164,7 +164,7 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None):
 
         # Add portion about filesystem matches here
         if volume_data["File_Matches"] is not None:
-            write_filematch_data(f, volume_data["File Matches"], volume_data["Name"])
+            write_filematch_data(f, volume_data["File_Matches"], volume_data["Name"])
 
         # Partition Information (Adding loop later)
         for partition_id in fs_data:
