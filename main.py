@@ -223,7 +223,9 @@ def main():
                 if res != []:
 
                     for resmatch in res:
-                        file_matches_dict[image_name].append((md5hash,file['filename'],partition_id_to_image_name(resmatch,image_data_list)))
+                        other_image_name = partition_id_to_image_name(resmatch,image_data_list)
+                        file_matches_dict[image_name].append((md5hash,file['filename'],other_image_name))
+                        file_matches_dict[other_image_name].append((md5hash,file['filename'],image_name))
                         
         print(file_matches_dict)
         if file_matches_dict == {}:
