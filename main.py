@@ -227,14 +227,14 @@ def main():
                 if res != []:
 
                     for resmatch in res:
-                        other_image_name = partition_id_to_image_name(resmatch,image_data_list)
+                        other_image_name,internal_partition = partition_id_to_image_name(resmatch,image_data_list)
 
                         # Check to make sure it's not finding a duplicate file in the same image's different fs
                         if image_name != other_image_name:
-                            file_matches_dict[image_name].append((md5hash,file['filename'],other_image_name,file['inode']))
-                            file_matches_dict[other_image_name].append((md5hash,file['filename'],image_name,file['inode']))
+                            file_matches_dict[image_name].append((md5hash,file['filename'],other_image_name,file['inode'],internal_partition))
+                            file_matches_dict[other_image_name].append((md5hash,file['filename'],image_name,file['inode'],internal_partition))
                         
-        print(file_matches_dict)
+        
         if file_matches_dict == {}:
             print("No matches found from images")
         
@@ -262,11 +262,11 @@ def partition_id_to_image_name(part_id,image_data_list):
 
         # Check if it's inside this image
         if part_id < (accumulated+partition_num):
-            return volume_data["Name"]
+            return (volume_data["Name"],(part_id-accumulated))
         else:
             accumulated += partition_num
     
-    return ""
+    return ("",-1)
 
 
 
