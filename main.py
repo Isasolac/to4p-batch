@@ -43,7 +43,6 @@ def main():
     image_id = 0
 
     # For the correlation partition to image
-    partition_num_list = []
     file_matches_dict = dict()
 
     for image in args.images:
@@ -129,7 +128,6 @@ def main():
                     volume="MBR"
                 elif "GUID" in line:
                     volume="GPT"
-                print("Volume is: "+volume)
                 volume_data["Volume"] = volume
 
             elif "Offset Sector" in line:
@@ -220,12 +218,14 @@ def main():
                     continue
 
                 # res will be a list of image ids where the file was found
-                res = search_hashfiles_md5(md5hash,i+1,hash_file_list)
+                res,inode_list = search_hashfiles_md5(md5hash,i+1,hash_file_list)
 
                 # If res is not empty, then a match has been found
                 if res != []:
 
-                    for resmatch in res:
+                    for i in range(len(res)):
+                        resmatch = res[i]
+                        other_inode = inode_list[i]
                         res_data = partition_id_to_image_name(resmatch,image_data_list)
                         other_image_name = res_data[0]
                         other_internal_partition = res_data[1]
@@ -233,7 +233,7 @@ def main():
                         # Check to make sure it's not finding a duplicate file in the same image's different fs
                         if image_name != other_image_name:
                             file_matches_dict[image_name].append((md5hash,file['filename'],other_image_name,file['inode'],internal_partition))
-                            file_matches_dict[other_image_name].append((md5hash,file['filename'],image_name,file['inode'],other_internal_partition))
+                            file_matches_dict[other_image_name].append((md5hash,file['filename'],image_name,other_inode,other_internal_partition))
                         
         
         if file_matches_dict == {}:
@@ -349,6 +349,7 @@ def parse_hashlist(hashlist_file, fs_name):
 def search_hashfiles_md5(file_hash, start_index, hash_file_list):
 
     matches = []
+    inodes = []
     for i in range(start_index, len(hash_file_list)):
         hash_files = hash_file_list[i]
 
@@ -359,8 +360,9 @@ def search_hashfiles_md5(file_hash, start_index, hash_file_list):
             if target_file == file_hash:
                 # Append the image id
                 matches.append(i)
+                inodes.append(target_file['inode'])
     
-    return matches
+    return matches,inodes
 
 
 
