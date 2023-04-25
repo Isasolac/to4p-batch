@@ -185,6 +185,7 @@ def generate_report(volume_data, fs_data: dict, output: str):
         if volume_data["File_Matches"] is not None:
             write_filematch_data(f, volume_data["File_Matches"], volume_data["Name"])
 
+        partition_counter = 0
         # Partition Information (Adding loop later)
         for partition_id in fs_data:
             data = fs_data[partition_id]
@@ -192,7 +193,7 @@ def generate_report(volume_data, fs_data: dict, output: str):
                 continue
 
             f.write(html_separatesection)
-            f.write(f"<p><b>## Partition {partition_id}: </b><br>")
+            f.write(f"<p><b>## Partition {partition_counter}: </b><br>")
             f.write(html_partitiontableheader)
             f.write("<tr>\n")
             f.write("<td>" + partition_id + "</td>\n")
@@ -217,6 +218,8 @@ def generate_report(volume_data, fs_data: dict, output: str):
                 write_hash_data(f, data, output)
             if data["WordList"] is not None:
                 write_wordlist_data(f, data, output)
+            
+            partition_counter += 1
 
         # Searching Section
         f.write(html_separatesection)
