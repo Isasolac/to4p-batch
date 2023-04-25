@@ -3,10 +3,8 @@ import argparse # Could also look at getopt?
 import parse_fs
 import wordlist
 import report
-import tsk_utils
 import shutil
-import hashlib
-from tsk_utils import run_command
+from tsk_utils import run_command, hash, fiwalk
 
 '''
     Command line input: python ./main.py image1.dd image2.dd [...]
@@ -23,6 +21,8 @@ def main():
     parser.add_argument('-w', '--wordlist', metavar='wordlist.txt',
                         type=str, required=False)
     parser.add_argument('-s', '--hashlist', metavar='hashlist.txt',
+                        type=str, required=False)
+    parser.add_argument('-o', '--output', metavar='output',
                         type=str, required=False)
     parser.add_argument('-c', '--correlate', action='store_true')
     args = parser.parse_args()
@@ -50,8 +50,7 @@ def main():
         image_dir_name = "image"+"_"+str(image_id)
         if os.path.exists(image_dir_name):
             shutil.rmtree(image_dir_name)
-        
-        _, _, _ = run_command('mkdir '+image_dir_name)
+        os.makedirs(image_dir_name)
 
         # Step 1: use mmls to find filesystems
         _, output, _ = run_command('mmls ./'+image)
@@ -194,6 +193,10 @@ def main():
         image_id += 1
 
     
+    if args.output is not None:
+        if os.path.exists(args.output):
+            shutil.rmtree(args.output)
+        os.makedirs(args.output)
     # Command line option for 'c' = correlate hashes of files
     if args.correlate:
         
@@ -232,7 +235,6 @@ def main():
             print("No matches found from images")
         
 
-
     for data in image_data_list:
         volume_data = data[0]
 
@@ -240,7 +242,7 @@ def main():
             volume_data["File_Matches"] = file_matches_dict[volume_data["Name"]]
         # volume_data, fs_data
         # wordlist_data = None if not args.wordlist else wordlist.wordlist_search_image(words,data[0]["Name"],data)
-        report.generate_report(data[0], data[1])
+        report.generate_report(data[0], data[1], args.output)
 
 '''
 Utility function for connecting the partition ID to image name
@@ -323,7 +325,7 @@ def parse_wordlist(wordlist_file):
 def parse_hashlist(hashlist_file, fs_name):
     matches = []
 
-    file_list = tsk_utils.fiwalk(fs_name)
+    file_list = fiwalk(fs_name)
 
     with open(hashlist_file, 'r') as file:
         

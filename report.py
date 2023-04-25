@@ -1,6 +1,10 @@
 import os
+import uuid
 import datetime
 import parse_fs as fs
+from tsk_utils import hash
+from fs_util import extract_file
+from fs import SupportedTypes
 
 def handle_fs_data(filesystem: fs.FileSystem):
     filesystem_info = "Not Analysed<br><br>"
@@ -47,9 +51,18 @@ def handle_fs_data(filesystem: fs.FileSystem):
         """
     return filesystem_info, metadata_info, content_info
 
-def write_hash_data(f, hash_data):
+def write_hash_data(f, fs_data, output):
+    hash_data = fs_data["HashList"]
     if len(hash_data) == 0:
         return
+    fs_type = None
+
+    if fs_data["Object"].type == SupportedTypes.NTFS:
+        fs_type = "ntfs"
+    elif fs_data["Object"].type == SupportedTypes.FAT16 or fs_data["Object"].type == SupportedTypes.FAT32:
+        fs_type = "fat" 
+    filesystem = fs_data["Name"]
+
     f.write(f"<p><b>Hash Search Result</b><br>")
     f.write(f"""
             <table border="1">
@@ -68,19 +81,25 @@ def write_hash_data(f, hash_data):
         f.write("<td>" + entry["filename"] + "</td>\n")
         f.write("<td>" + entry["type"] + "</td>\n")
         f.write("<td>" + entry["atime"] + "</td>\n")
+        matching_hash = ""
         if entry["matching_hash"] == "md5":
+            matching_hash = entry["md5"]
             f.write("<td><b>" + entry["md5"] + "</b></td>\n")
             f.write("<td>" + entry["sha1"] + "</td>\n")
         else:
+            matching_hash = entry["sha1"]
             f.write("<td>" + entry["md5"] + "</td>\n")
             f.write("<td><b>" + entry["sha1"] + "</b></td>\n")
         f.write("</tr>\n")
 
+        if output is not None:
+            extract_file(fs_type, filesystem, entry['inode'], output + "/" + matching_hash)
+
     f.write("</table></p>")
 
 
-def generate_report(volume_data, fs_data: dict, wordlist_data = None):
-    
+def generate_report(volume_data, fs_data: dict, output: str):
+
     # Get current date and time
     now = datetime.datetime.now()
     current_date = now.strftime("%B %d, %Y")
@@ -195,9 +214,9 @@ def generate_report(volume_data, fs_data: dict, wordlist_data = None):
             f.write(metadata_info)
             f.write(content_info)
             if data["HashList"] is not None:
-                write_hash_data(f, data["HashList"])
+                write_hash_data(f, data, output)
             if data["WordList"] is not None:
-                write_wordlist_data(f, data)
+                write_wordlist_data(f, data, output)
 
         # Searching Section
         f.write(html_separatesection)
@@ -239,9 +258,17 @@ def write_filematch_data(f, file_matches, name):
     
     f.write("</table></p>")
 
-def write_wordlist_data(f, fs_data):
+def write_wordlist_data(f, fs_data, output):
     if len(fs_data["WordList"]["Found_Files"]) == 0:
         return
+    
+    fs_type_str = None
+    if fs_data["Object"].type == SupportedTypes.NTFS:
+        fs_type_str = "ntfs"
+    elif fs_data["Object"].type == SupportedTypes.FAT16 or fs_data["Object"].type == SupportedTypes.FAT32:
+        fs_type_str = "fat" 
+    filesystem = fs_data["Name"]
+
     f.write(f"<p><b>Word List Search Results</b><br>")
     f.write(f"""
             <table border="1">
@@ -251,6 +278,8 @@ def write_wordlist_data(f, fs_data):
                     <th>Inode Address</th>
                     <th>Last Access Time</th>
                     <th>Tampered With?</th>
+                    <th>MD5 Hash</th>
+                    <th>SHA1 Hash</th>
                 </tr></b>
     """)
     fs_type = fs_data["Object"].type
@@ -271,6 +300,16 @@ def write_wordlist_data(f, fs_data):
         else:
             f.write("<td></td>\n")
             f.write("<td></td>\n")
+
+        temp_file = str(uuid.uuid4())
+        extract_file(fs_type_str, filesystem, entry['Inode'], temp_file)
+        md5, sha1 = hash(temp_file)
+        if output is not None:
+            os.rename(temp_file, output + "/" + md5)
+        else:
+            os.remove(temp_file)
+        f.write(f"<td>{md5}</td>\n")
+        f.write(f"<td>{sha1}</td>\n")
         f.write("</tr>\n")
 
     f.write("</table></p>")

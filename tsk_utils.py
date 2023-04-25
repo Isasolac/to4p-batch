@@ -3,8 +3,23 @@ import subprocess
 from xml.etree import ElementTree
 from fs import SupportedTypes
 import datetime
+import hashlib
 
 FIWALK_DEFAULT_NS = "{http://www.forensicswiki.org/wiki/Category:Digital_Forensics_XML}"
+
+
+def hash(file_path):
+    md5 = hashlib.md5()
+    sha1 = hashlib.sha1()
+
+    with open(file_path, 'rb') as f:
+        while True:
+            data = f.read(4096)
+            if not data:
+                break
+            md5.update(data)
+            sha1.update(data)
+    return md5.hexdigest(), sha1.hexdigest()
 
 def check_if_file_exists(path):
     if not os.path.isfile(path):
@@ -83,7 +98,3 @@ def fiwalk(dd_image_path):
     except:
         print("Failed to execute fiwalk")
     return files
-
-# files = fiwalk("./ntfs.dd")
-# for file in files:
-#     print(file)
