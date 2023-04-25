@@ -227,7 +227,9 @@ def main():
                 if res != []:
 
                     for resmatch in res:
-                        other_image_name,internal_partition = partition_id_to_image_name(resmatch,image_data_list)
+                        res_data = partition_id_to_image_name(resmatch,image_data_list)
+                        other_image_name = res_data[0]
+                        internal_partition = res_data[1]
 
                         # Check to make sure it's not finding a duplicate file in the same image's different fs
                         if image_name != other_image_name:
