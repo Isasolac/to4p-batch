@@ -216,7 +216,7 @@ def write_filematch_data(f, file_matches, name):
         f.write(f"No matches found for this image.")
         return
     
-    file_list = file_matches[name]
+    file_list = file_matches
     f.write(f"""
             <table border="1">
                 <tr><b>
