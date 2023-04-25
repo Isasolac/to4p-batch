@@ -41,6 +41,9 @@ def main():
 
     image_id = 0
 
+    # For the correlation partition to image
+    partition_num_list = []
+
     for image in args.images:
 
         image_dir_name = "image"+"_"+str(image_id)
@@ -187,11 +190,12 @@ def main():
                     hash_file_list.append(tsk_utils.fiwalk(data["Name"]))
                     
         image_id += 1
+
     
     # Command line option for 'c' = correlate hashes of files
     if args.correlate:
         
-
+        print("Length of hash file list: "+str(len(hash_file_list)))
         # keys are file hashes, value is list of tuples 
         # (image_id_search, image_id_found)
         file_matches_dict = dict()
@@ -200,6 +204,7 @@ def main():
         for i in range(len(hash_file_list)-1):
             hash_files = hash_file_list[i]
             print(hash_files)
+            print(i)
             file_matches_dict[i] = []
 
             # Compare it to all the files in proceeding
@@ -231,11 +236,25 @@ def main():
         report.generate_report(data[0], data[1])
 
 '''
-Utility function
+Utility function for connecting the partition ID to image name
 '''
+def partition_id_to_image_name(part_id,image_data_list):
 
-def partition_id_to_image_name(part_id):
-    pass
+    accumulated = 0
+    
+    for image in image_data_list:
+
+        volume_data = image[0]
+        partition_num = volume_data["Partition_Num"]
+
+        # Check if it's inside this image
+        if part_id < (accumulated+partition_num):
+            return volume_data["Name"]
+        else:
+            accumulated += partition_num
+    
+    return ""
+
 
 
 '''
@@ -318,6 +337,9 @@ def search_hashfiles_md5(file_hash, start_index, hash_file_list):
     matches = []
     for i in range(start_index, len(hash_file_list)):
         hash_files = hash_file_list[i]
+        print("compared to: ")
+        print(hash_files)
+        print("---------")
 
         for file in hash_files:
             target_file = file['md5']
