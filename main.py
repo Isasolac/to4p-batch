@@ -204,7 +204,7 @@ def main():
         for i in range(len(hash_file_list)-1):
             hash_files = hash_file_list[i]
             image_name = partition_id_to_image_name(i,image_data_list)
-            file_matches_dict[image_name] = []
+            #file_matches_dict[image_name] = []
 
             # Compare it to all the files in proceeding
             #for j in range(i+1, len(hash_file_list)):
@@ -222,8 +222,10 @@ def main():
                 if res != []:
 
                     for resmatch in res:
-                        file_matches_dict[image_name].append((md5hash,file['filename'],partition_id_to_image_name(resmatch,image_data_list)))
-        
+                        if not file_matches_dict[image_name]:
+                            file_matches_dict[image_name] = [(md5hash,file['filename'],partition_id_to_image_name(resmatch,image_data_list))]
+                        else:
+                            file_matches_dict[image_name].append((md5hash,file['filename'],partition_id_to_image_name(resmatch,image_data_list)))
         print(file_matches_dict)
         if file_matches_dict == {}:
             print("No matches found from images")
