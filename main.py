@@ -43,6 +43,7 @@ def main():
 
     # For the correlation partition to image
     partition_num_list = []
+    file_matches_dict = dict()
 
     for image in args.images:
 
@@ -56,6 +57,7 @@ def main():
         _, output, _ = run_command('mmls ./'+image)
         #print(output)
         md5, sha1 = hash(image)
+        file_matches_dict[image] = []
 
         volume_data = {"Volume": "", "Sector_Size": -1, 
                        "Name": image, "Offset_Sector": -1, 
@@ -198,7 +200,6 @@ def main():
         print("Length of hash file list: "+str(len(hash_file_list)))
         # keys are file hashes, value is list of tuples 
         # (image_id_search, image_id_found)
-        file_matches_dict = dict()
 
         # For every filesystem (except the last)
         for i in range(len(hash_file_list)-1):
@@ -222,16 +223,19 @@ def main():
                 if res != []:
 
                     for resmatch in res:
-                        if not file_matches_dict[image_name]:
-                            file_matches_dict[image_name] = [(md5hash,file['filename'],partition_id_to_image_name(resmatch,image_data_list))]
-                        else:
-                            file_matches_dict[image_name].append((md5hash,file['filename'],partition_id_to_image_name(resmatch,image_data_list)))
+                        file_matches_dict[image_name].append((md5hash,file['filename'],partition_id_to_image_name(resmatch,image_data_list)))
+                        
         print(file_matches_dict)
         if file_matches_dict == {}:
             print("No matches found from images")
+        
 
 
     for data in image_data_list:
+        volume_data = data[0]
+
+        if args.correlate:
+            volume_data["File_Matches"] = file_matches_dict[volume_data["Name"]]
         # volume_data, fs_data
         # wordlist_data = None if not args.wordlist else wordlist.wordlist_search_image(words,data[0]["Name"],data)
         report.generate_report(data[0], data[1])

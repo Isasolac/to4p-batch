@@ -216,6 +216,8 @@ def write_filematch_data(f, file_matches, name):
     if len(file_matches == 0):
         f.write(f"No matches found across images.")
         return
+    elif len(file_matches[name] == 0):
+        f.write(f"No matches found for this image.")
     
     file_list = file_matches[name]
     f.write(f"""
