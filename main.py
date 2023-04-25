@@ -208,22 +208,22 @@ def main():
             file_matches_dict[i] = []
 
             # Compare it to all the files in proceeding
-            for j in range(i+1, len(hash_file_list)):
-                # j is the 'starting index' of the comparison
-                for file in hash_files:
-                    md5hash = file['md5']
+            #for j in range(i+1, len(hash_file_list)):
+            # i+1 is the 'starting index' of the comparison
+            for file in hash_files:
+                md5hash = file['md5']
 
-                    if md5hash == None:
-                        continue
+                if md5hash == None:
+                    continue
 
-                    # res will be a list of image ids where the file was found
-                    res = search_hashfiles_md5(md5hash,j,hash_file_list)
+                # res will be a list of image ids where the file was found
+                res = search_hashfiles_md5(md5hash,i+1,hash_file_list)
 
-                    # If res is not empty, then a match has been found
-                    if res != []:
+                # If res is not empty, then a match has been found
+                if res != []:
 
-                        for resmatch in res:
-                            file_matches_dict[i].append((md5hash,file['filename'],resmatch))
+                    for resmatch in res:
+                        file_matches_dict[i].append((md5hash,file['filename'],resmatch))
         
         print(file_matches_dict)
         if file_matches_dict == {}:
