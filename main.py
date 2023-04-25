@@ -203,9 +203,8 @@ def main():
         # For every filesystem (except the last)
         for i in range(len(hash_file_list)-1):
             hash_files = hash_file_list[i]
-            print(hash_files)
-            print(i)
-            file_matches_dict[i] = []
+            image_name = partition_id_to_image_name(i,image_data_list)
+            file_matches_dict[image_name] = []
 
             # Compare it to all the files in proceeding
             #for j in range(i+1, len(hash_file_list)):
@@ -223,7 +222,7 @@ def main():
                 if res != []:
 
                     for resmatch in res:
-                        file_matches_dict[i].append((md5hash,file['filename'],resmatch))
+                        file_matches_dict[image_name].append((md5hash,file['filename'],partition_id_to_image_name(resmatch,image_data_list)))
         
         print(file_matches_dict)
         if file_matches_dict == {}:
@@ -337,9 +336,6 @@ def search_hashfiles_md5(file_hash, start_index, hash_file_list):
     matches = []
     for i in range(start_index, len(hash_file_list)):
         hash_files = hash_file_list[i]
-        print("compared to: "+str(i))
-        print(hash_files)
-        print("---------")
 
         for file in hash_files:
             target_file = file['md5']
