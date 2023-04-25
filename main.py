@@ -227,8 +227,11 @@ def main():
 
                     for resmatch in res:
                         other_image_name = partition_id_to_image_name(resmatch,image_data_list)
-                        file_matches_dict[image_name].append((md5hash,file['filename'],other_image_name))
-                        file_matches_dict[other_image_name].append((md5hash,file['filename'],image_name))
+
+                        # Check to make sure it's not finding a duplicate file in the same image's different fs
+                        if image_name != other_image_name:
+                            file_matches_dict[image_name].append((md5hash,file['filename'],other_image_name,file['inode']))
+                            file_matches_dict[other_image_name].append((md5hash,file['filename'],image_name,file['inode']))
                         
         print(file_matches_dict)
         if file_matches_dict == {}:
