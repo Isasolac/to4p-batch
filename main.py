@@ -15,7 +15,6 @@ from tsk_utils import run_command
 # top level function that runs batch loop
 def main():
     
-    # TODO: parse each file
     # Set up argument parsing
     # Reference: https://docs.python.org/3/library/argparse.html 
     parser = argparse.ArgumentParser(description="Process images")
@@ -25,11 +24,14 @@ def main():
                         type=str, required=False)
     parser.add_argument('-s', '--hashlist', metavar='hashlist.txt',
                         type=str, required=False)
+    parser.add_argument('-c', '--correlate', action='store_true')
     args = parser.parse_args()
 
     # Collects the dictionary information about each image
     image_data_list = []
     image_name_list = []
+
+    hash_file_list = []
 
     if args.wordlist:
         words = parse_wordlist(args.wordlist)
@@ -38,6 +40,10 @@ def main():
     
 
     image_id = 0
+
+    # For the correlation partition to image
+    partition_num_list = []
+    file_matches_dict = dict()
 
     for image in args.images:
 
@@ -51,8 +57,12 @@ def main():
         _, output, _ = run_command('mmls ./'+image)
         #print(output)
         md5, sha1 = hash(image)
+        file_matches_dict[image] = []
 
-        volume_data = {"Volume": "", "Sector_Size": -1, "Name": image, "Offset_Sector": -1, "MD5": md5, "SHA1": sha1}
+        volume_data = {"Volume": "", "Sector_Size": -1, 
+                       "Name": image, "Offset_Sector": -1, 
+                       "MD5": md5, "SHA1": sha1, 
+                       "Partition_Num": 0, "File_Matches": None}
 
         fs_data = dict()
         fs_data_start = False
@@ -80,6 +90,7 @@ def main():
                     #print(data["Description"])
                     # Find the type of file system
                     fs_type = 'partition'
+                    volume_data["Partition_Num"] += 1
 
                     # Create the name
                     name = image_dir_name+"/"+fs_type + "_" + str(fs_id) + ".dd"
@@ -170,19 +181,88 @@ def main():
                 print("Slot "+key+" is a partition,")
                 print("File system type: "+data["Type"])
                 print("Carved name = "+data["Name"])
+
+                # Call parse_hashlist
+                if args.hashlist:
+                    hash_files = parse_hashlist(args.hashlist,data["Name"])
+
+                # Add to another arg
+                if args.correlate:
+                    print("adding hash file list")
+                    hash_file_list.append(tsk_utils.fiwalk(data["Name"]))
                     
         image_id += 1
+
     
+    # Command line option for 'c' = correlate hashes of files
+    if args.correlate:
+        
+        print("Length of hash file list: "+str(len(hash_file_list)))
+        # keys are file hashes, value is list of tuples 
+        # (image_id_search, image_id_found)
+
+        # For every filesystem (except the last)
+        for i in range(len(hash_file_list)-1):
+            hash_files = hash_file_list[i]
+            image_name = partition_id_to_image_name(i,image_data_list)
+            #file_matches_dict[image_name] = []
+
+            # Compare it to all the files in proceeding
+            #for j in range(i+1, len(hash_file_list)):
+            # i+1 is the 'starting index' of the comparison
+            for file in hash_files:
+                md5hash = file['md5']
+
+                if md5hash == None:
+                    continue
+
+                # res will be a list of image ids where the file was found
+                res = search_hashfiles_md5(md5hash,i+1,hash_file_list)
+
+                # If res is not empty, then a match has been found
+                if res != []:
+
+                    for resmatch in res:
+                        other_image_name = partition_id_to_image_name(resmatch,image_data_list)
+                        file_matches_dict[image_name].append((md5hash,file['filename'],other_image_name))
+                        file_matches_dict[other_image_name].append((md5hash,file['filename'],image_name))
+                        
+        print(file_matches_dict)
+        if file_matches_dict == {}:
+            print("No matches found from images")
+        
+
+
     for data in image_data_list:
+        volume_data = data[0]
+
+        if args.correlate:
+            volume_data["File_Matches"] = file_matches_dict[volume_data["Name"]]
         # volume_data, fs_data
         # wordlist_data = None if not args.wordlist else wordlist.wordlist_search_image(words,data[0]["Name"],data)
         report.generate_report(data[0], data[1])
 
 '''
-count: the number ID of the resulting carved filesystem ex "1_1"
+Utility function for connecting the partition ID to image name
 '''
-def cat_slot(slot_num, image_name, count):
-    pass
+def partition_id_to_image_name(part_id,image_data_list):
+
+    accumulated = 0
+    
+    for image in image_data_list:
+
+        volume_data = image[0]
+        partition_num = volume_data["Partition_Num"]
+
+        # Check if it's inside this image
+        if part_id < (accumulated+partition_num):
+            return volume_data["Name"]
+        else:
+            accumulated += partition_num
+    
+    return ""
+
+
 
 '''
 Returns a dictionary with slot information
@@ -257,6 +337,25 @@ def parse_hashlist(hashlist_file, fs_name):
                     matches.append(file)
 
     return matches
+
+# Returns a list of image IDs where this file was found
+def search_hashfiles_md5(file_hash, start_index, hash_file_list):
+
+    matches = []
+    for i in range(start_index, len(hash_file_list)):
+        hash_files = hash_file_list[i]
+
+        for file in hash_files:
+            target_file = file['md5']
+
+
+            if target_file == file_hash:
+                # Append the image id
+                matches.append(i)
+    
+    return matches
+
+
 
 def hash(file_path):
     md5 = hashlib.md5()
