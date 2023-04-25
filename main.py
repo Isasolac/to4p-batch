@@ -337,7 +337,7 @@ def search_hashfiles_md5(file_hash, start_index, hash_file_list):
     matches = []
     for i in range(start_index, len(hash_file_list)):
         hash_files = hash_file_list[i]
-        print("compared to: ")
+        print("compared to: "+str(i))
         print(hash_files)
         print("---------")
 
